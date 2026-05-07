@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>娃衣資料庫</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --pink:#f2a7c3;--pink-light:#fde8f2;--pink-dark:#c4608a;
+    --bg:#fff9fc;--surface:#fff;--border:#f0d6e8;
+    --text:#3a2030;--muted:#9a7088;
+    --accent:#e8689a;
+  }
+  body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+  header{background:var(--surface);border-bottom:1px solid var(--border);padding:20px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+  .logo{font-family:'Playfair Display',serif;font-size:22px;color:var(--accent)}
+  .logo span{font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:400;color:var(--muted);margin-left:8px}
+  .header-btn{background:var(--accent);color:#fff;border:none;padding:8px 18px;border-radius:20px;font-size:13px;font-family:'Noto Sans TC',sans-serif;cursor:pointer;transition:opacity .2s}
+  .header-btn:hover{opacity:.85}
+  .filters{padding:16px 24px;display:flex;gap:8px;flex-wrap:wrap;border-bottom:1px solid var(--border);background:var(--surface)}
+  .filter-btn{background:transparent;border:1px solid var(--border);color:var(--muted);padding:6px 14px;border-radius:16px;font-size:12px;font-family:'Noto Sans TC',sans-serif;cursor:pointer;transition:all .2s}
+  .filter-btn.active,.filter-btn:hover{background:var(--pink-light);border-color:var(--pink);color:var(--pink-dark)}
+  .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;padding:20px 24px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;transition:transform .2s,box-shadow .2s}
+  .card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(196,96,138,.12)}
+  .card-img{width:100%;aspect-ratio:1;object-fit:cover;background:var(--pink-light);display:flex;align-items:center;justify-content:center;color:var(--pink);font-size:36px}
+  .card-img img{width:100%;height:100%;object-fit:cover}
+  .card-body{padding:10px 12px}
+  .card-title{font-size:13px;font-weight:500;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .card-meta{font-size:11px;color:var(--muted)}
+  .tag{display:inline-block;background:var(--pink-light);color:var(--pink-dark);border-radius:10px;padding:2px 8px;font-size:10px;margin:2px 2px 0 0}
+  .empty{text-align:center;padding:60px 24px;color:var(--muted)}
+  .empty-icon{font-size:48px;margin-bottom:12px}
+
+  /* Modal */
+  .modal-bg{display:none;position:fixed;inset:0;background:rgba(58,32,48,.5);z-index:200;align-items:center;justify-content:center;padding:20px}
+  .modal-bg.open{display:flex}
+  .modal{background:var(--surface);border-radius:20px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;padding:24px;position:relative}
+  .modal h2{font-family:'Playfair Display',serif;font-size:20px;color:var(--accent);margin-bottom:20px}
+  .close-btn{position:absolute;top:16px;right:16px;background:var(--pink-light);border:none;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:16px;color:var(--muted);display:flex;align-items:center;justify-content:center}
+  .form-group{margin-bottom:14px}
+  .form-group label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+  .form-group input,.form-group select,.form-group textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text);outline:none}
+  .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--pink)}
+  .form-group textarea{resize:vertical;min-height:70px}
+  .upload-area{border:2px dashed var(--border);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:border-color .2s;background:var(--bg)}
+  .upload-area:hover,.upload-area.dragover{border-color:var(--pink);background:var(--pink-light)}
+  .upload-area p{font-size:13px;color:var(--muted)}
+  .upload-preview{width:100%;max-height:180px;object-fit:cover;border-radius:8px;margin-top:10px;display:none}
+  .submit-btn{width:100%;background:var(--accent);color:#fff;border:none;padding:11px;border-radius:10px;font-size:14px;font-family:'Noto Sans TC',sans-serif;cursor:pointer;margin-top:8px;transition:opacity .2s}
+  .submit-btn:hover{opacity:.85}
+  .submit-btn:disabled{opacity:.5;cursor:not-allowed}
+  .status{text-align:center;font-size:13px;margin-top:10px;min-height:20px}
+  .status.ok{color:#2d9e75}
+  .status.err{color:#d85a30}
+
+  /* Detail modal */
+  .detail-img{width:100%;max-height:280px;object-fit:cover;border-radius:12px;margin-bottom:16px}
+  .detail-row{display:flex;gap:8px;margin-bottom:6px;font-size:13px}
+  .detail-label{color:var(--muted);min-width:80px;flex-shrink:0}
+  .loading{text-align:center;padding:60px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">娃衣圖書館 <span>Plushes Outfit Gallery</span></div>
+  <button class="header-btn" onclick="openUpload()">＋ 上傳造型</button>
+</header>
+
+<div class="filters" id="filters">
+  <button class="filter-btn active" onclick="setFilter('all',this)">全部</button>
+  <button class="filter-btn" onclick="setFilter('上衣',this)">上衣</button>
+  <button class="filter-btn" onclick="setFilter('下身',this)">下身</button>
+  <button class="filter-btn" onclick="setFilter('套裝',this)">套裝</button>
+  <button class="filter-btn" onclick="setFilter('配件',this)">配件</button>
+</div>
+
+<div class="gallery" id="gallery">
+  <div class="loading">載入中...</div>
+</div>
+
+<!-- Upload Modal -->
+<div class="modal-bg" id="uploadModal">
+  <div class="modal">
+    <button class="close-btn" onclick="closeUpload()">✕</button>
+    <h2>分享娃娃造型</h2>
+
+    <div class="form-group">
+      <label>造型名稱 *</label>
+      <input type="text" id="f-name" placeholder="例：台大米白帽T">
+    </div>
+    <div class="form-group">
+      <label>照片 *</label>
+      <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()" ondragover="ev.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleDrop(event)">
+        <p>點擊或拖曳上傳照片</p>
+        <p style="font-size:11px;margin-top:4px">JPG / PNG，建議正方形</p>
+        <img class="upload-preview" id="preview">
+      </div>
+      <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleFile(this.files[0])">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="form-group">
+        <label>試穿娃娃</label>
+        <input type="text" id="f-doll" placeholder="例：SUNSUN發聲玩偶">
+      </div>
+      <div class="form-group">
+        <label>款式</label>
+        <select id="f-style">
+          <option value="">選擇款式</option>
+          <option>上衣</option><option>下身</option><option>套裝</option><option>配件</option><option>鞋子</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="form-group">
+        <label>娃娃尺寸 (cm)</label>
+        <input type="number" id="f-size" placeholder="例：28">
+      </div>
+      <div class="form-group">
+        <label>產地</label>
+        <select id="f-origin">
+          <option value="">選擇產地</option>
+          <option>台灣</option><option>日本</option><option>韓國</option><option>中國</option><option>不確定</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>標籤（用逗號分隔）</label>
+      <input type="text" id="f-tags" placeholder="例：休閒, 日系, 可愛">
+    </div>
+    <div class="form-group">
+      <label>商家連結或名稱</label>
+      <input type="text" id="f-shop" placeholder="例：https://... 或 店名">
+    </div>
+    <div class="form-group">
+      <label>備註</label>
+      <textarea id="f-note" placeholder="尺寸建議、穿搭心得..."></textarea>
+    </div>
+    <button class="submit-btn" id="submitBtn" onclick="submitForm()">上傳分享 ✦</button>
+    <div class="status" id="statusMsg"></div>
+  </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal-bg" id="detailModal">
+  <div class="modal">
+    <button class="close-btn" onclick="document.getElementById('detailModal').classList.remove('open')">✕</button>
+    <div id="detailContent"></div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://jakxuqbfplyohjshqnlp.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impha3h1cWJmcGx5b2hqc2hxbmxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNDUxOTksImV4cCI6MjA5MzcyMTE5OX0.PtSj2MKFARo88C0Hp4HTRDobanaI2xPSG3goPmNkCLM";
+const EDGE_URL = `${SUPABASE_URL}/functions/v1/notion-proxy`;
+const BUCKET_URL = `${SUPABASE_URL}/storage/v1/object/public/outfit-photos`;
+
+let allItems = [];
+let currentFilter = 'all';
+let selectedFile = null;
+
+async function loadItems() {
+  try {
+    const res = await fetch(EDGE_URL, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','Authorization':`Bearer ${SUPABASE_KEY}`},
+      body: JSON.stringify({action:'list'})
+    });
+    const data = await res.json();
+    allItems = (data.results || []).map(page => {
+      const p = page.properties;
+      return {
+        id: page.id,
+        name: p['名稱']?.title?.[0]?.text?.content || '未命名',
+        doll: p['試穿娃娃']?.select?.name || '',
+        style: p['款式']?.select?.name || '',
+        size: p['娃娃尺寸']?.number || '',
+        tags: p['標籤']?.multi_select?.map(t=>t.name) || [],
+        note: p['備註']?.rich_text?.[0]?.text?.content || '',
+        shop: p['商家連結或名稱']?.url || '',
+        origin: p['產地']?.select?.name || '',
+        cover: page.cover?.external?.url || page.cover?.file?.url || null,
+      };
+    });
+    renderGallery();
+  } catch(e) {
+    document.getElementById('gallery').innerHTML = '<div class="empty"><div class="empty-icon">🌸</div><p>載入失敗，請確認設定</p></div>';
+  }
+}
+
+function renderGallery() {
+  const filtered = currentFilter === 'all' ? allItems : allItems.filter(i => i.style === currentFilter);
+  const g = document.getElementById('gallery');
+  if (!filtered.length) {
+    g.innerHTML = '<div class="empty"><div class="empty-icon">🧸</div><p>還沒有造型，快來第一個分享！</p></div>';
+    return;
+  }
+  g.innerHTML = filtered.map(item => `
+    <div class="card" onclick="openDetail(${JSON.stringify(item).replace(/"/g,'&quot;')})">
+      <div class="card-img">
+        ${item.cover ? `<img src="${item.cover}" alt="${item.name}" loading="lazy">` : '🧸'}
+      </div>
+      <div class="card-body">
+        <div class="card-title">${item.name}</div>
+        <div class="card-meta">${item.doll || ''}${item.size ? ` · ${item.size}cm` : ''}</div>
+        <div>${item.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function setFilter(v, btn) {
+  currentFilter = v;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderGallery();
+}
+
+function openDetail(item) {
+  const d = document.getElementById('detailContent');
+  d.innerHTML = `
+    ${item.cover ? `<img class="detail-img" src="${item.cover}" alt="${item.name}">` : ''}
+    <h2 style="font-family:'Playfair Display',serif;color:var(--accent);margin-bottom:16px">${item.name}</h2>
+    ${item.doll ? `<div class="detail-row"><span class="detail-label">試穿娃娃</span><span>${item.doll}</span></div>` : ''}
+    ${item.style ? `<div class="detail-row"><span class="detail-label">款式</span><span>${item.style}</span></div>` : ''}
+    ${item.size ? `<div class="detail-row"><span class="detail-label">娃娃尺寸</span><span>${item.size} cm</span></div>` : ''}
+    ${item.origin ? `<div class="detail-row"><span class="detail-label">產地</span><span>${item.origin}</span></div>` : ''}
+    ${item.tags.length ? `<div class="detail-row"><span class="detail-label">標籤</span><span>${item.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</span></div>` : ''}
+    ${item.shop ? `<div class="detail-row"><span class="detail-label">商家</span><span><a href="${item.shop.startsWith('http') ? item.shop : 'https://'+item.shop}" target="_blank" style="color:var(--accent)">${item.shop}</a></span></div>` : ''}
+    ${item.note ? `<div class="detail-row"><span class="detail-label">備註</span><span>${item.note}</span></div>` : ''}
+  `;
+  document.getElementById('detailModal').classList.add('open');
+}
+
+function openUpload() { document.getElementById('uploadModal').classList.add('open'); }
+function closeUpload() { document.getElementById('uploadModal').classList.remove('open'); }
+
+function handleFile(file) {
+  if (!file) return;
+  selectedFile = file;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const prev = document.getElementById('preview');
+    prev.src = e.target.result;
+    prev.style.display = 'block';
+    document.querySelector('#uploadArea p').textContent = file.name;
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('uploadArea').classList.remove('dragover');
+  handleFile(e.dataTransfer.files[0]);
+}
+
+async function uploadToSupabase(file) {
+  const ext = file.name.split('.').pop();
+  const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const res = await fetch(`${SUPABASE_URL}/storage/v1/object/outfit-photos/${filename}`, {
+    method: 'POST',
+    headers: {'Authorization':`Bearer ${SUPABASE_KEY}`,'Content-Type':file.type},
+    body: file
+  });
+  if (!res.ok) throw new Error('圖片上傳失敗');
+  return `${BUCKET_URL}/${filename}`;
+}
+
+async function submitForm() {
+  const name = document.getElementById('f-name').value.trim();
+  if (!name) { setStatus('請填寫造型名稱！', 'err'); return; }
+  if (!selectedFile) { setStatus('請選擇一張照片！', 'err'); return; }
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  setStatus('上傳照片中...', '');
+
+  try {
+    const imageUrl = await uploadToSupabase(selectedFile);
+    setStatus('儲存資料中...', '');
+
+    const tagsRaw = document.getElementById('f-tags').value;
+    const tags = tagsRaw ? tagsRaw.split(',').map(t=>t.trim()).filter(Boolean) : [];
+
+    await fetch(EDGE_URL, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','Authorization':`Bearer ${SUPABASE_KEY}`},
+      body: JSON.stringify({
+        action: 'create',
+        data: {
+          name,
+          imageUrl,
+          doll: document.getElementById('f-doll').value.trim(),
+          style: document.getElementById('f-style').value,
+          size: document.getElementById('f-size').value,
+          tags,
+          note: document.getElementById('f-note').value.trim(),
+          shop: document.getElementById('f-shop').value.trim(),
+          origin: document.getElementById('f-origin').value,
+        }
+      })
+    });
+
+    setStatus('上傳成功！🎉', 'ok');
+    setTimeout(() => { closeUpload(); loadItems(); resetForm(); }, 1500);
+  } catch(e) {
+    setStatus('上傳失敗：' + e.message, 'err');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function setStatus(msg, cls) {
+  const el = document.getElementById('statusMsg');
+  el.textContent = msg;
+  el.className = 'status ' + cls;
+}
+
+function resetForm() {
+  ['f-name','f-doll','f-size','f-tags','f-shop','f-note'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-style').value='';
+  document.getElementById('f-origin').value='';
+  document.getElementById('preview').style.display='none';
+  document.querySelector('#uploadArea p').textContent='點擊或拖曳上傳照片';
+  selectedFile = null;
+  setStatus('', '');
+}
+
+document.getElementById('uploadModal').addEventListener('click', e => { if(e.target===e.currentTarget) closeUpload(); });
+document.getElementById('detailModal').addEventListener('click', e => { if(e.target===e.currentTarget) e.currentTarget.classList.remove('open'); });
+
+loadItems();
+</script>
+</body>
+</html>
