@@ -693,14 +693,14 @@ async function submitForm(){
     const imageUrl = await uploadImg(compressedFile);
     setStatus('Writing to Notion...','');
     const tagsRaw=document.getElementById('f-tags').value;
-    const tags=tagsRaw?tagsRaw.split(',').map(t=>t.trim()).filter(Boolean):[];
+    const tags=tagsRaw?tagsRaw.split(/[,，]/).map(t=>t.trim()).filter(Boolean):[];
     const shop=document.getElementById('f-shop').value.trim();
     const res=await fetch(EDGE,{
       method:'POST',headers:hdrs,
       body:JSON.stringify({action:'create',data:{
         name,imageUrl,
         doll:document.getElementById('f-doll').value.trim(),
-        style:document.getElementById('f-style').value.split(',').map(s=>s.trim()).filter(Boolean),
+        style:document.getElementById('f-style').value.split(/[,，]/).map(s=>s.trim()).filter(Boolean),
         size:document.getElementById('f-size').value,
         tags,
         note:document.getElementById('f-note').value.trim(),
@@ -732,7 +732,7 @@ function showAC(input, listId) {
   const rawQ = input.value;
   // for tags and style, autocomplete the last token after comma
   const isMulti = listId === 'ac-tags' || listId === 'ac-style';
-  const q = isMulti ? rawQ.split(',').pop().trim().toLowerCase() : rawQ.trim().toLowerCase();
+  const q = isMulti ? rawQ.split(/[,，]/).pop().trim().toLowerCase() : rawQ.trim().toLowerCase();
   const list = document.getElementById(listId);
   if (!q) { list.style.display = 'none'; return; }
   const opts = AC_SOURCES[listId]().filter(v => v.toLowerCase().includes(q)).slice(0, 10);
@@ -753,7 +753,7 @@ function pickAC(e, inputId, listId, val) {
     // replace last token
     const parts = input.value.split(',');
     parts[parts.length - 1] = ' ' + val;
-    input.value = parts.join(',').replace(/^\s*,/, '') + ', ';
+    input.value = parts.join(', ').replace(/^\s*,\s*/, '') + ', ';
   } else {
     input.value = val;
   }
