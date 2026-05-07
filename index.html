@@ -182,6 +182,12 @@ header{
   .gallery{grid-template-columns:repeat(2,1fr)}
   .card:nth-child(n) .card-img{aspect-ratio:1}
 }
+
+.ac-list{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--border);z-index:50;max-height:180px;overflow-y:auto;display:none}
+.ac-item{padding:8px 10px;font-size:12px;cursor:pointer;border-bottom:1px solid var(--border)}
+.ac-item:last-child{border-bottom:none}
+.ac-item:hover{background:var(--bg)}
+.ac-item strong{font-weight:500}
 </style>
 </head>
 <body>
@@ -261,8 +267,8 @@ header{
       <input type="file" id="fInput" accept="image/*" style="display:none" onchange="handleFile(this.files[0])">
     </div>
     <div class="two">
-      <div class="fg"><label>試穿娃娃</label><input type="text" id="f-doll" placeholder="例：SUNSUN玩偶"></div>
-      <div class="fg"><label>款式</label><select id="f-style"><option value="">—</option></select></div>
+      <div class="fg" style="position:relative"><label>試穿娃娃</label><input type="text" id="f-doll" placeholder="例：SUNSUN玩偶" autocomplete="off" oninput="showAC(this,'ac-doll')"><div id="ac-doll" class="ac-list"></div></div>
+      <div class="fg" style="position:relative"><label>款式</label><input type="text" id="f-style" placeholder="例：上衣" autocomplete="off" oninput="showAC(this,'ac-style')"><div id="ac-style" class="ac-list"></div></div>
     </div>
     <div class="two">
       <div class="fg"><label>娃娃尺寸 cm</label><input type="number" id="f-size" placeholder="28"></div>
@@ -310,12 +316,12 @@ async function load(){
         idx:String(i+1).padStart(3,'0'),
         id:pg.id,
         name:p['娃衣名稱']?.title?.[0]?.text?.content||'Untitled',
-        doll:p['試穿娃娃']?.select?.name||'',
-        style:p['款式']?.select?.name||'',
+        doll:p['試穿娃娃']?.multi_select?.map(t=>t.name).join(', ')||'',
+        style:p['款式']?.multi_select?.map(t=>t.name).join(', ')||'',
         size:p['娃娃尺寸']?.number||null,
         tags:p['標籤']?.multi_select?.map(t=>t.name)||[],
         note:p['備註']?.rich_text?.[0]?.text?.content||'',
-        shop:p['商家連結或名稱']?.url||'',
+        shop:p['商家連結或名稱']?.rich_text?.[0]?.text?.content||'',
         origin:p['產地']?.select?.name||'',
         cover:pg.cover?.external?.url||pg.cover?.file?.url||null,
       };
@@ -332,8 +338,7 @@ function buildFilters(){
   const styles=[...new Set(items.map(i=>i.style).filter(Boolean))].sort();
   renderCBs('fl-style',styles,aStyles);
   // populate upload select dynamically
-  const sel=document.getElementById('f-style');
-  sel.innerHTML='<option value="">—</option>'+styles.map(s=>`<option value="${s}">${s}</option>`).join('');
+  // styles available for autocomplete (used by showAC)
 
   const dolls=[...new Set(items.map(i=>i.doll).filter(Boolean))].sort();
   renderCBs('fl-doll',dolls,aDolls);
@@ -414,7 +419,7 @@ function openDetail(item){
       ${item.size?`<div class="dr"><span class="dk">尺寸</span><span>${item.size} cm</span></div>`:''}
       ${item.origin?`<div class="dr"><span class="dk">產地</span><span>${item.origin}</span></div>`:''}
       ${item.tags.length?`<div class="dr"><span class="dk">標籤</span><div class="tag-list">${item.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div></div>`:''}
-      ${item.shop?`<div class="dr"><span class="dk">商家</span><a href="${item.shop.startsWith('http')?item.shop:'https://'+item.shop}" target="_blank" style="color:var(--text);text-decoration:underline;word-break:break-all">${item.shop}</a></div>`:''}
+      ${item.shop?`<div class="dr"><span class="dk">商家</span><span>${item.shop.startsWith('http')?`<a href="${item.shop}" target="_blank" style="color:var(--text);text-decoration:underline;word-break:break-all">${item.shop}</a>`:`${item.shop}`}</span></div>`:''}
       ${item.note?`<div class="dr"><span class="dk">備註</span><span style="line-height:1.6">${item.note}</span></div>`:''}
     </div>`;
   document.getElementById('detModal').classList.add('open');
@@ -488,8 +493,8 @@ function setStatus(msg,cls){
   el.textContent=msg;el.className='status-msg '+(cls||'');
 }
 function resetForm(){
-  ['f-name','f-doll','f-size','f-tags','f-shop','f-note'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('f-style').value='';
+  ['f-name','f-doll','f-style','f-size','f-tags','f-shop','f-note'].forEach(id=>document.getElementById(id).value='');
+
   document.getElementById('f-origin').value='';
   document.getElementById('upPreview').style.display='none';
   document.getElementById('upText').textContent='點擊或拖曳上傳';
@@ -500,6 +505,38 @@ document.getElementById('upModal').addEventListener('click',e=>{if(e.target===e.
 document.getElementById('detModal').addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.classList.remove('open');});
 
 load();
+
+const acData = {
+  'ac-doll': () => [...new Set(items.map(i=>i.doll).filter(Boolean))],
+  'ac-style': () => [...new Set(items.flatMap(i=>i.style?i.style.split(', '):[]).filter(Boolean))],
+};
+
+function showAC(input, listId){
+  const q = input.value.trim().toLowerCase();
+  const list = document.getElementById(listId);
+  if(!q){list.style.display='none';return;}
+  const opts = acData[listId]().filter(v=>v.toLowerCase().includes(q));
+  if(!opts.length){list.style.display='none';return;}
+  list.innerHTML = opts.map(v=>{
+    const hi = v.replace(new RegExp('('+q+')','gi'),'<strong>$1</strong>');
+    return `<div class="ac-item" onmousedown="pickAC(event,'${input.id}','${listId}',\`${v}\`)">\</div>`;
+  }).join('');
+  list.style.display='block';
+}
+
+function pickAC(e, inputId, listId, val){
+  e.preventDefault();
+  document.getElementById(inputId).value = val;
+  document.getElementById(listId).style.display='none';
+}
+
+document.addEventListener('click', e=>{
+  ['ac-doll','ac-style'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.style.display='none';
+  });
+});
+
 </script>
 </body>
 </html>
