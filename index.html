@@ -343,12 +343,12 @@ async function load(){
 }
 
 function buildFilters(){
-  const styles=[...new Set(items.map(i=>i.style).filter(Boolean))].sort();
+  const styles=[...new Set(items.flatMap(i=>i.style).filter(Boolean))].sort();
   renderCBs('fl-style',styles,aStyles);
   // populate upload select dynamically
   // styles available for autocomplete (used by showAC)
 
-  const dolls=[...new Set(items.map(i=>i.doll).filter(Boolean))].sort();
+  const dolls=[...new Set(items.flatMap(i=>i.doll).filter(Boolean))].sort();
   renderCBs('fl-doll',dolls,aDolls);
 
   const tm={};items.forEach(i=>i.tags.forEach(t=>tm[t]=(tm[t]||0)+1));
@@ -388,11 +388,30 @@ function toggleMore(id,btn){
 
 
 function filterSearch(listId, q) {
-  const rows = document.querySelectorAll('#' + listId + ' .filter-row');
-  rows.forEach(row => {
+  const container = document.getElementById(listId);
+  const ql = q.toLowerCase();
+  const moreDiv = document.getElementById(listId + '-more');
+  const moreBtn = container.querySelector('.show-more-btn');
+
+  if (q) {
+    // 搜尋中：展開隱藏區塊，隱藏「更多」按鈕
+    if (moreDiv) moreDiv.style.display = '';
+    if (moreBtn) moreBtn.style.display = 'none';
+  } else {
+    // 清空搜尋：恢復收合狀態
+    if (moreDiv) moreDiv.style.display = 'none';
+    if (moreBtn) {
+      const count = moreDiv ? moreDiv.querySelectorAll('.filter-row').length : 0;
+      moreBtn.textContent = '+ ' + count + ' 更多';
+      moreBtn.style.display = '';
+    }
+  }
+
+  // 過濾每一列（含隱藏區塊內的項目）
+  container.querySelectorAll('.filter-row').forEach(row => {
     const label = row.querySelector('.flabel');
     if (!label) return;
-    row.style.display = label.textContent.toLowerCase().includes(q.toLowerCase()) ? '' : 'none';
+    row.style.display = label.textContent.toLowerCase().includes(ql) ? '' : 'none';
   });
 }
 
@@ -407,7 +426,7 @@ function applyFilters(){
   const sMin=parseFloat(document.getElementById('sz-min').value)||null;
   const sMax=parseFloat(document.getElementById('sz-max').value)||null;
   const f=items.filter(item=>{
-    if(q&&!item.name.toLowerCase().includes(q)&&!item.doll.toLowerCase().includes(q))return false;
+    if(q&&!item.name.toLowerCase().includes(q)&&!item.doll.join('').toLowerCase().includes(q))return false;
     if(aStyles.size&&![...aStyles].some(s=>item.style.includes(s)))return false;
     if(aDolls.size&&![...aDolls].some(d=>item.doll.includes(d)))return false;
     if(aTags.size&&![...aTags].every(t=>item.tags.includes(t)))return false;
@@ -523,7 +542,11 @@ async function submitForm(){
     const rd=await res.json();
     if(!res.ok||rd.object==='error')throw new Error(rd.message||JSON.stringify(rd));
     setStatus('Done ✓','ok');
-    setTimeout(()=>{closeUp
+    setTimeout(()=>{closeUpload();resetForm();load();},1200);
+  }catch(e){setStatus('Error: '+e.message,'err');}
+  finally{btn.disabled=false;}
+}
+
 // ── Autocomplete ──
 const AC_SOURCES = {
   'ac-doll': () => [...new Set(items.flatMap(i => i.doll).filter(Boolean))].sort(),
@@ -548,7 +571,7 @@ function showAC(input, listId) {
     const safe = v.replace(/&/g,'&amp;').replace(/</g,'&lt;');
     const safeQ = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const hi = safe.replace(new RegExp('(' + safeQ + ')', 'gi'), '<b>$1</b>');
-    return '<div class="ac-item" onmousedown="pickAC(event,\'' + input.id + '\',\'' + listId + '\',\'' + v.replace(/'/g,"\'") + '\')">' + hi + '</div>';
+    return '<div class="ac-item" onmousedown="pickAC(event,\'' + input.id + '\',\'' + listId + '\',\'' + v.replace(/'/g,"\\'") + '\')">' + hi + '</div>';
   }).join('');
   list.style.display = 'block';
 }
@@ -575,10 +598,7 @@ document.addEventListener('click', e => {
   });
 });
 
-load();resetForm();load();},1200);
-  }catch(e){setStatus('Error: '+e.message,'err');}
-  finally{btn.disabled=false;}
-}
+
 
 function setStatus(msg,cls){
   const el=document.getElementById('statusMsg');
