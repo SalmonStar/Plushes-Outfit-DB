@@ -4,226 +4,312 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>娃衣圖書館</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600&family=Noto+Sans+TC:wght@300;400;500&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#f8f8f8;--surface:#fff;--surface2:#f2f2f2;
-  --text:#111;--muted:#888;--border:#e0e0e0;
-  --accent:#111;--accent-inv:#fff;
+  --bg:#fafaf8;
+  --surface:#fff;
+  --text:#1a1a1a;
+  --muted:#999;
+  --light:#eee;
+  --border:#e8e8e4;
+  --accent:#1a1a1a;
 }
-body{font-family:'DM Sans','Noto Sans TC',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
-header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 32px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
-.logo{font-size:15px;font-weight:500;letter-spacing:.02em}
-.logo-sub{font-size:11px;color:var(--muted);margin-left:10px;font-weight:300;letter-spacing:.05em}
-.upload-btn{background:var(--accent);color:var(--accent-inv);border:none;padding:7px 16px;font-size:12px;font-family:'DM Sans','Noto Sans TC',sans-serif;letter-spacing:.04em;cursor:pointer;transition:opacity .15s}
+html{font-size:14px}
+body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* ── Header ── */
+header{
+  display:grid;grid-template-columns:1fr auto 1fr;
+  align-items:center;padding:0 40px;height:60px;
+  border-bottom:1px solid var(--border);background:var(--bg);
+  position:sticky;top:0;z-index:100;
+}
+.header-left{display:flex;align-items:center;gap:20px}
+.header-issue{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.12em}
+.header-logo{text-align:center}
+.logo-jp{font-family:'Shippori Mincho',serif;font-size:20px;letter-spacing:.15em;font-weight:500}
+.logo-en{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.18em;color:var(--muted);display:block;margin-top:2px}
+.header-right{display:flex;justify-content:flex-end;align-items:center;gap:16px}
+.nav-link{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;color:var(--muted);cursor:pointer;background:none;border:none;transition:color .15s}
+.nav-link:hover{color:var(--text)}
+.upload-btn{
+  font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.12em;
+  background:var(--accent);color:#fff;border:none;
+  padding:7px 14px;cursor:pointer;transition:opacity .15s;
+}
 .upload-btn:hover{opacity:.75}
-.layout{display:flex;min-height:calc(100vh - 56px)}
-.sidebar{width:220px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);padding:24px 20px;position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto}
-.sidebar-section{margin-bottom:28px}
-.sidebar-title{font-size:10px;font-weight:500;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin-bottom:10px}
-.filter-group{display:flex;flex-direction:column;gap:4px}
-.filter-item{display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 6px;border-radius:2px;transition:background .1s;user-select:none}
-.filter-item:hover{background:var(--surface2)}
-.filter-item input[type=checkbox]{width:13px;height:13px;accent-color:var(--accent);cursor:pointer;flex-shrink:0}
-.filter-item span.flabel{font-size:13px;cursor:pointer;color:var(--text);flex:1}
-.filter-item .count{font-size:11px;color:var(--muted)}
-.size-inputs{display:flex;align-items:center;gap:6px}
-.size-input{width:60px;border:1px solid var(--border);padding:5px 8px;font-size:12px;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);outline:none}
-.size-input:focus{border-color:var(--accent)}
-.size-sep{font-size:11px;color:var(--muted)}
-.clear-btn{background:none;border:none;font-size:11px;color:var(--muted);cursor:pointer;padding:0;text-decoration:underline;margin-top:8px;display:block}
-.clear-btn:hover{color:var(--text)}
-.search-wrap{padding:16px 24px 0;max-width:400px}
-.search-input{width:100%;border:1px solid var(--border);padding:8px 12px;font-size:13px;font-family:'DM Sans','Noto Sans TC',sans-serif;background:var(--surface);color:var(--text);outline:none}
-.search-input:focus{border-color:var(--accent)}
-main{flex:1;min-width:0;padding:20px 24px}
-.result-bar{font-size:12px;color:var(--muted);margin-bottom:16px;letter-spacing:.02em}
-.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:1px;background:var(--border)}
-.card{background:var(--surface);cursor:pointer;overflow:hidden;transition:opacity .15s}
-.card:hover{opacity:.8}
-.card-img{width:100%;aspect-ratio:1;overflow:hidden;background:var(--surface2)}
-.card-img img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .3s}
-.card:hover .card-img img{transform:scale(1.04)}
-.card-no-img{width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;background:var(--surface2);color:var(--muted);font-size:28px}
-.card-body{padding:10px 12px 12px}
-.card-title{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px}
-.card-meta{font-size:11px;color:var(--muted);margin-bottom:5px}
-.tags{display:flex;flex-wrap:wrap;gap:3px}
-.tag{font-size:10px;border:1px solid var(--border);padding:1px 6px;color:var(--muted);letter-spacing:.02em}
-.empty{grid-column:1/-1;text-align:center;padding:80px 24px;color:var(--muted)}
-.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;align-items:center;justify-content:center;padding:20px}
+
+/* ── Layout ── */
+.layout{display:flex;min-height:calc(100vh - 60px)}
+
+/* ── Sidebar ── */
+.sidebar{
+  width:200px;flex-shrink:0;padding:32px 20px;
+  border-right:1px solid var(--border);
+  position:sticky;top:60px;height:calc(100vh - 60px);overflow-y:auto;
+  background:var(--bg);
+}
+.sidebar-block{margin-bottom:32px}
+.sidebar-label{
+  font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.15em;
+  color:var(--muted);text-transform:uppercase;margin-bottom:12px;display:block;
+}
+.filter-list{display:flex;flex-direction:column;gap:1px}
+.filter-row{display:flex;align-items:center;gap:8px;padding:5px 4px;cursor:pointer;transition:background .1s;border-radius:1px}
+.filter-row:hover{background:var(--border)}
+.filter-row input[type=checkbox]{width:11px;height:11px;accent-color:var(--accent);flex-shrink:0;cursor:pointer}
+.filter-row .flabel{font-size:12px;color:var(--text);flex:1;cursor:pointer}
+.filter-row .cnt{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)}
+.size-row{display:flex;align-items:center;gap:6px}
+.size-in{width:52px;border:none;border-bottom:1px solid var(--border);padding:4px 0;font-size:12px;font-family:'Noto Sans TC',sans-serif;background:transparent;color:var(--text);outline:none}
+.size-in:focus{border-bottom-color:var(--accent)}
+.size-sep{font-size:10px;color:var(--muted)}
+.clear-all{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--muted);background:none;border:none;cursor:pointer;text-decoration:underline;margin-top:8px;display:block}
+.clear-all:hover{color:var(--text)}
+
+/* ── Main ── */
+.main-wrap{flex:1;min-width:0}
+.top-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:20px 32px 16px;border-bottom:1px solid var(--border);
+}
+.search-box{
+  border:none;border-bottom:1px solid var(--border);
+  padding:6px 0;font-size:13px;font-family:'Noto Sans TC',sans-serif;
+  background:transparent;color:var(--text);outline:none;width:240px;
+}
+.search-box:focus{border-bottom-color:var(--accent)}
+.search-box::placeholder{color:var(--muted)}
+.result-count{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.08em}
+
+/* ── Gallery ── */
+.gallery{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+  gap:0;
+  padding:0;
+}
+
+/* Masonry-ish: alternate card heights */
+.card{
+  background:var(--surface);
+  cursor:pointer;overflow:hidden;
+  border-right:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  transition:background .15s;
+  position:relative;
+}
+.card:hover{background:#f5f5f2}
+.card:hover .card-img img{transform:scale(1.05)}
+.card-img{width:100%;overflow:hidden;background:var(--light)}
+.card-img img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .4s ease}
+.card-no-img{display:flex;align-items:center;justify-content:center;background:var(--light);color:var(--border);font-size:32px}
+.card-body{padding:14px 16px 16px}
+.card-num{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:.1em;margin-bottom:6px}
+.card-title{font-family:'Shippori Mincho',serif;font-size:14px;font-weight:500;line-height:1.4;margin-bottom:6px;letter-spacing:.03em}
+.card-meta{font-size:11px;color:var(--muted);margin-bottom:8px;letter-spacing:.02em}
+.tag-list{display:flex;flex-wrap:wrap;gap:4px}
+.tag{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.08em;border:1px solid var(--border);padding:2px 6px;color:var(--muted)}
+
+/* alternate heights for visual rhythm */
+.card:nth-child(3n+1) .card-img{aspect-ratio:1}
+.card:nth-child(3n+2) .card-img{aspect-ratio:.85}
+.card:nth-child(3n) .card-img{aspect-ratio:1.1}
+
+.empty{grid-column:1/-1;text-align:center;padding:80px;color:var(--muted);font-size:13px}
+
+/* skeleton */
+.skel .card-img{aspect-ratio:1;animation:sk 1.4s ease infinite}
+.skel .skel-line{height:10px;border-radius:0;margin-bottom:8px;animation:sk 1.4s ease infinite}
+.skel .skel-line.s{width:50%}
+@keyframes sk{0%,100%{background:#eee}50%{background:#e4e4e0}}
+
+/* ── Modals ── */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(26,26,26,.65);z-index:200;align-items:center;justify-content:center;padding:20px}
 .modal-bg.open{display:flex}
-.modal{background:var(--surface);width:100%;max-width:500px;max-height:92vh;overflow-y:auto;padding:28px;position:relative}
-.modal-close{position:absolute;top:18px;right:18px;background:none;border:none;font-size:22px;cursor:pointer;color:var(--muted);line-height:1}
-.modal-close:hover{color:var(--text)}
-.modal h2{font-size:16px;font-weight:500;letter-spacing:.03em;margin-bottom:22px}
-.form-group{margin-bottom:14px}
-.form-group label{display:block;font-size:11px;letter-spacing:.06em;color:var(--muted);text-transform:uppercase;margin-bottom:5px}
-.form-group input,.form-group select,.form-group textarea{width:100%;border:1px solid var(--border);padding:8px 10px;font-size:13px;font-family:'DM Sans','Noto Sans TC',sans-serif;background:var(--bg);color:var(--text);outline:none;border-radius:0;-webkit-appearance:none}
-.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--accent)}
-.form-group textarea{resize:vertical;min-height:72px}
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.upload-area{border:1px dashed var(--border);padding:28px 20px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;background:var(--bg)}
-.upload-area:hover,.upload-area.dragover{border-color:var(--accent);background:var(--surface2)}
-.upload-area p{font-size:12px;color:var(--muted)}
-.upload-preview{width:100%;max-height:200px;object-fit:cover;margin-top:10px;display:none}
-.submit-btn{width:100%;background:var(--accent);color:var(--accent-inv);border:none;padding:11px;font-size:13px;font-family:'DM Sans','Noto Sans TC',sans-serif;letter-spacing:.06em;cursor:pointer;margin-top:10px;transition:opacity .15s}
+.modal{
+  background:var(--surface);width:100%;max-width:480px;
+  max-height:92vh;overflow-y:auto;padding:36px 32px;position:relative;
+}
+.modal-x{position:absolute;top:20px;right:20px;background:none;border:none;font-size:18px;color:var(--muted);cursor:pointer;font-family:'DM Mono',monospace;line-height:1}
+.modal-x:hover{color:var(--text)}
+.modal-title{font-family:'Shippori Mincho',serif;font-size:18px;font-weight:500;letter-spacing:.05em;margin-bottom:28px}
+.fg{margin-bottom:16px}
+.fg label{display:block;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.15em;color:var(--muted);text-transform:uppercase;margin-bottom:6px}
+.fg input,.fg select,.fg textarea{
+  width:100%;border:none;border-bottom:1px solid var(--border);
+  padding:6px 0;font-size:13px;font-family:'Noto Sans TC',sans-serif;
+  background:transparent;color:var(--text);outline:none;border-radius:0;-webkit-appearance:none;
+}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-bottom-color:var(--accent)}
+.fg textarea{resize:vertical;min-height:72px;border:1px solid var(--border);padding:8px;margin-top:2px}
+.fg textarea:focus{border-color:var(--accent)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.upload-zone{
+  border:1px solid var(--border);padding:28px 20px;text-align:center;cursor:pointer;
+  transition:border-color .2s,background .2s;margin-top:2px;
+}
+.upload-zone:hover,.upload-zone.over{border-color:var(--accent);background:#f8f8f5}
+.upload-zone p{font-size:12px;color:var(--muted)}
+.upload-zone .hint{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.08em;margin-top:4px}
+.upload-prev{width:100%;max-height:180px;object-fit:cover;margin-top:10px;display:none}
+.submit-btn{
+  width:100%;background:var(--accent);color:#fff;border:none;
+  padding:12px;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.12em;
+  cursor:pointer;margin-top:12px;transition:opacity .15s;
+}
 .submit-btn:hover{opacity:.75}
-.submit-btn:disabled{opacity:.4;cursor:not-allowed}
-.status{text-align:center;font-size:12px;margin-top:10px;min-height:18px;letter-spacing:.02em}
-.status.ok{color:#2a7a4f}
-.status.err{color:#c0392b}
-.detail-cover{width:100%;max-height:340px;object-fit:cover;display:block;margin-bottom:20px}
-.detail-name{font-size:18px;font-weight:500;margin-bottom:16px;letter-spacing:.02em}
-.detail-rows{display:flex;flex-direction:column;gap:9px}
-.detail-row{display:flex;gap:12px;font-size:13px;align-items:flex-start}
-.dl{color:var(--muted);min-width:72px;flex-shrink:0;font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding-top:1px}
-.skel-card{overflow:hidden;background:var(--surface)}
-.skel-img{width:100%;aspect-ratio:1;background:linear-gradient(90deg,var(--surface2) 25%,var(--border) 50%,var(--surface2) 75%);background-size:200% 100%;animation:shimmer 1.3s infinite}
-.skel-body{padding:10px 12px 12px}
-.skel-line{height:11px;border-radius:2px;margin-bottom:7px;background:linear-gradient(90deg,var(--surface2) 25%,var(--border) 50%,var(--surface2) 75%);background-size:200% 100%;animation:shimmer 1.3s infinite}
-.skel-line.short{width:55%}
-@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
-@media(max-width:640px){.sidebar{display:none}.search-wrap{padding:12px 16px 0}main{padding:16px}.gallery{grid-template-columns:repeat(2,1fr)}}
+.submit-btn:disabled{opacity:.35;cursor:not-allowed}
+.status-msg{text-align:center;font-size:11px;margin-top:10px;min-height:16px;font-family:'DM Mono',monospace;letter-spacing:.04em}
+.status-msg.ok{color:#3a7a56}
+.status-msg.err{color:#b03030}
+
+/* detail */
+.detail-img{width:100%;max-height:360px;object-fit:cover;display:block;margin-bottom:24px}
+.detail-title{font-family:'Shippori Mincho',serif;font-size:20px;font-weight:500;letter-spacing:.05em;margin-bottom:20px;line-height:1.4}
+.detail-rows{display:flex;flex-direction:column;gap:10px}
+.dr{display:flex;gap:16px;font-size:13px}
+.dk{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;min-width:64px;padding-top:2px;flex-shrink:0}
+
+@media(max-width:640px){
+  header{padding:0 20px}
+  .header-issue,.logo-en{display:none}
+  .sidebar{display:none}
+  .top-bar{padding:14px 16px}
+  .search-box{width:160px}
+  .gallery{grid-template-columns:repeat(2,1fr)}
+  .card:nth-child(n) .card-img{aspect-ratio:1}
+}
 </style>
 </head>
 <body>
 
 <header>
-  <div>
-    <span class="logo">娃衣圖書館</span>
-    <span class="logo-sub">Plushes Outfit Gallery</span>
+  <div class="header-left">
+    <span class="header-issue">VOL.01</span>
+    <button class="nav-link" onclick="clearFilters()">INDEX</button>
   </div>
-  <button class="upload-btn" onclick="openUpload()">+ 上傳造型</button>
+  <div class="header-logo">
+    <span class="logo-jp">娃衣圖書館</span>
+    <span class="logo-en">PLUSHES OUTFIT ARCHIVE</span>
+  </div>
+  <div class="header-right">
+    <button class="nav-link" id="filterToggle" onclick="toggleSidebar()">FILTER</button>
+    <button class="upload-btn" onclick="openUpload()">SUBMIT</button>
+  </div>
 </header>
 
 <div class="layout">
-  <aside class="sidebar">
-    <div class="sidebar-section">
-      <div class="sidebar-title">款式</div>
-      <div class="filter-group" id="filter-style"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-block">
+      <span class="sidebar-label">款式</span>
+      <div class="filter-list" id="fl-style"></div>
     </div>
-    <div class="sidebar-section">
-      <div class="sidebar-title">試穿娃娃</div>
-      <div class="filter-group" id="filter-doll"></div>
+    <div class="sidebar-block">
+      <span class="sidebar-label">試穿娃娃</span>
+      <div class="filter-list" id="fl-doll"></div>
     </div>
-    <div class="sidebar-section">
-      <div class="sidebar-title">娃娃尺寸 (cm)</div>
-      <div class="size-inputs">
-        <input class="size-input" type="number" id="size-min" placeholder="最小" oninput="applyFilters()">
+    <div class="sidebar-block">
+      <span class="sidebar-label">尺寸 cm</span>
+      <div class="size-row">
+        <input class="size-in" type="number" id="sz-min" placeholder="min" oninput="applyFilters()">
         <span class="size-sep">—</span>
-        <input class="size-input" type="number" id="size-max" placeholder="最大" oninput="applyFilters()">
+        <input class="size-in" type="number" id="sz-max" placeholder="max" oninput="applyFilters()">
       </div>
     </div>
-    <div class="sidebar-section">
-      <div class="sidebar-title">標籤</div>
-      <div class="filter-group" id="filter-tags"></div>
+    <div class="sidebar-block">
+      <span class="sidebar-label">標籤</span>
+      <div class="filter-list" id="fl-tags"></div>
     </div>
-    <button class="clear-btn" onclick="clearFilters()">清除所有篩選</button>
+    <button class="clear-all" onclick="clearFilters()">CLEAR ALL</button>
   </aside>
 
-  <div style="flex:1;min-width:0">
-    <div class="search-wrap">
-      <input class="search-input" type="text" id="searchInput" placeholder="搜尋造型名稱或娃娃..." oninput="applyFilters()">
+  <div class="main-wrap">
+    <div class="top-bar">
+      <input class="search-box" type="text" id="searchQ" placeholder="Search..." oninput="applyFilters()">
+      <span class="result-count" id="rcount">—</span>
     </div>
-    <main>
-      <div class="result-bar" id="resultBar">載入中...</div>
-      <div class="gallery" id="gallery">
-        ${Array(9).fill(0).map(()=>'<div class="skel-card"><div class="skel-img"></div><div class="skel-body"><div class="skel-line"></div><div class="skel-line short"></div></div></div>').join('')}
-      </div>
-    </main>
+    <div class="gallery" id="gallery">
+      ${Array(8).fill(0).map(()=>`<div class="card skel"><div class="card-img"></div><div class="card-body"><div class="skel-line" style="background:#eee;height:10px;margin-bottom:8px"></div><div class="skel-line s" style="background:#eee;height:10px;width:50%"></div></div></div>`).join('')}
+    </div>
   </div>
 </div>
 
-<!-- Upload Modal -->
-<div class="modal-bg" id="uploadModal">
+<!-- Upload modal -->
+<div class="modal-bg" id="upModal">
   <div class="modal">
-    <button class="modal-close" onclick="closeUpload()">×</button>
-    <h2>上傳造型</h2>
-    <div class="form-group">
+    <button class="modal-x" onclick="closeUpload()">×</button>
+    <div class="modal-title">Submit Outfit</div>
+
+    <div class="fg">
       <label>造型名稱 *</label>
       <input type="text" id="f-name" placeholder="例：台大米白帽T">
     </div>
-    <div class="form-group">
+    <div class="fg">
       <label>照片 *</label>
-      <div class="upload-area" id="uploadArea"
-        onclick="document.getElementById('fileInput').click()"
-        ondragover="event.preventDefault();this.classList.add('dragover')"
-        ondragleave="this.classList.remove('dragover')"
+      <div class="upload-zone" id="upZone"
+        onclick="document.getElementById('fInput').click()"
+        ondragover="event.preventDefault();this.classList.add('over')"
+        ondragleave="this.classList.remove('over')"
         ondrop="handleDrop(event)">
-        <p id="uploadText">點擊或拖曳上傳照片</p>
-        <p style="font-size:11px;margin-top:3px">JPG / PNG</p>
-        <img class="upload-preview" id="preview" alt="預覽">
+        <p id="upText">點擊或拖曳上傳</p>
+        <p class="hint">JPG / PNG</p>
+        <img class="upload-prev" id="upPreview" alt="">
       </div>
-      <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleFile(this.files[0])">
+      <input type="file" id="fInput" accept="image/*" style="display:none" onchange="handleFile(this.files[0])">
     </div>
-    <div class="two-col">
-      <div class="form-group">
-        <label>試穿娃娃</label>
-        <input type="text" id="f-doll" placeholder="例：SUNSUN玩偶">
-      </div>
-      <div class="form-group">
-        <label>款式</label>
-        <select id="f-style"><option value="">選擇款式</option></select>
-      </div>
+    <div class="two">
+      <div class="fg"><label>試穿娃娃</label><input type="text" id="f-doll" placeholder="例：SUNSUN玩偶"></div>
+      <div class="fg"><label>款式</label><select id="f-style"><option value="">—</option></select></div>
     </div>
-    <div class="two-col">
-      <div class="form-group">
-        <label>娃娃尺寸 (cm)</label>
-        <input type="number" id="f-size" placeholder="例：28">
-      </div>
-      <div class="form-group">
-        <label>產地</label>
+    <div class="two">
+      <div class="fg"><label>娃娃尺寸 cm</label><input type="number" id="f-size" placeholder="28"></div>
+      <div class="fg"><label>產地</label>
         <select id="f-origin">
-          <option value="">選擇產地</option>
+          <option value="">—</option>
           <option>台灣</option><option>日本</option><option>韓國</option><option>中國</option><option>不確定</option>
         </select>
       </div>
     </div>
-    <div class="form-group">
-      <label>標籤（用逗號分隔）</label>
-      <input type="text" id="f-tags" placeholder="例：休閒, 日系, 可愛">
-    </div>
-    <div class="form-group">
-      <label>商家連結或名稱</label>
-      <input type="text" id="f-shop" placeholder="https://... 或 店名">
-    </div>
-    <div class="form-group">
-      <label>備註</label>
-      <textarea id="f-note" placeholder="尺寸建議、穿搭心得..."></textarea>
-    </div>
-    <button class="submit-btn" id="submitBtn" onclick="submitForm()">上傳分享</button>
-    <div class="status" id="statusMsg"></div>
+    <div class="fg"><label>標籤（逗號分隔）</label><input type="text" id="f-tags" placeholder="休閒, 日系, 可愛"></div>
+    <div class="fg"><label>商家連結</label><input type="text" id="f-shop" placeholder="https://..."></div>
+    <div class="fg"><label>備註</label><textarea id="f-note" placeholder="尺寸建議、穿搭心得..."></textarea></div>
+    <button class="submit-btn" id="subBtn" onclick="submitForm()">UPLOAD</button>
+    <div class="status-msg" id="statusMsg"></div>
   </div>
 </div>
 
-<!-- Detail Modal -->
-<div class="modal-bg" id="detailModal">
-  <div class="modal" style="max-width:560px">
-    <button class="modal-close" onclick="document.getElementById('detailModal').classList.remove('open')">×</button>
-    <div id="detailContent"></div>
+<!-- Detail modal -->
+<div class="modal-bg" id="detModal">
+  <div class="modal" style="max-width:540px">
+    <button class="modal-x" onclick="document.getElementById('detModal').classList.remove('open')">×</button>
+    <div id="detContent"></div>
   </div>
 </div>
 
 <script>
-const SUPABASE_URL="https://jakxuqbfplyohjshqnlp.supabase.co";
-const SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impha3h1cWJmcGx5b2hqc2hxbmxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNDUxOTksImV4cCI6MjA5MzcyMTE5OX0.PtSj2MKFARo88C0Hp4HTRDobanaI2xPSG3goPmNkCLM";
-const EDGE_URL=`${SUPABASE_URL}/functions/v1/notion-proxy`;
-const BUCKET_URL=`${SUPABASE_URL}/storage/v1/object/public/outfit-photos`;
+const SB_URL="https://jakxuqbfplyohjshqnlp.supabase.co";
+const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impha3h1cWJmcGx5b2hqc2hxbmxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNDUxOTksImV4cCI6MjA5MzcyMTE5OX0.PtSj2MKFARo88C0Hp4HTRDobanaI2xPSG3goPmNkCLM";
+const EDGE=`${SB_URL}/functions/v1/notion-proxy`;
+const BUCKET=`${SB_URL}/storage/v1/object/public/outfit-photos`;
 
-let allItems=[],selectedFile=null;
-let activeStyles=new Set(),activeDolls=new Set(),activeTags=new Set();
+let items=[],selFile=null;
+let aStyles=new Set(),aDolls=new Set(),aTags=new Set();
 
-async function loadItems(){
+const hdrs={'Content-Type':'application/json','Authorization':`Bearer ${SB_KEY}`};
+
+async function load(){
   try{
-    const res=await fetch(EDGE_URL,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${SUPABASE_KEY}`},body:JSON.stringify({action:'list'})});
-    const data=await res.json();
-    allItems=(data.results||[]).map(page=>{
-      const p=page.properties;
+    const r=await fetch(EDGE,{method:'POST',headers:hdrs,body:JSON.stringify({action:'list'})});
+    const d=await r.json();
+    items=(d.results||[]).map((pg,i)=>{
+      const p=pg.properties;
       return{
-        id:page.id,
-        name:p['名稱']?.title?.[0]?.text?.content||'未命名',
+        idx:String(i+1).padStart(3,'0'),
+        id:pg.id,
+        name:p['名稱']?.title?.[0]?.text?.content||'Untitled',
         doll:p['試穿娃娃']?.select?.name||'',
         style:p['款式']?.select?.name||'',
         size:p['娃娃尺寸']?.number||null,
@@ -231,149 +317,153 @@ async function loadItems(){
         note:p['備註']?.rich_text?.[0]?.text?.content||'',
         shop:p['商家連結或名稱']?.url||'',
         origin:p['產地']?.select?.name||'',
-        cover:page.cover?.external?.url||page.cover?.file?.url||null,
+        cover:pg.cover?.external?.url||pg.cover?.file?.url||null,
       };
     });
     buildFilters();
     applyFilters();
   }catch(e){
-    document.getElementById('gallery').innerHTML='<div class="empty">載入失敗，請確認設定</div>';
-    document.getElementById('resultBar').textContent='';
+    document.getElementById('gallery').innerHTML='<div class="empty">載入失敗</div>';
+    document.getElementById('rcount').textContent='error';
   }
 }
 
 function buildFilters(){
-  const styles=[...new Set(allItems.map(i=>i.style).filter(Boolean))].sort();
-  renderCBs('filter-style',styles,activeStyles);
+  const styles=[...new Set(items.map(i=>i.style).filter(Boolean))].sort();
+  renderCBs('fl-style',styles,aStyles);
+  // populate upload select dynamically
   const sel=document.getElementById('f-style');
-  sel.innerHTML='<option value="">選擇款式</option>'+styles.map(s=>`<option>${s}</option>`).join('');
+  sel.innerHTML='<option value="">—</option>'+styles.map(s=>`<option value="${s}">${s}</option>`).join('');
 
-  const dolls=[...new Set(allItems.map(i=>i.doll).filter(Boolean))].sort();
-  renderCBs('filter-doll',dolls,activeDolls);
+  const dolls=[...new Set(items.map(i=>i.doll).filter(Boolean))].sort();
+  renderCBs('fl-doll',dolls,aDolls);
 
-  const tagMap={};
-  allItems.forEach(i=>i.tags.forEach(t=>tagMap[t]=(tagMap[t]||0)+1));
-  const tags=Object.keys(tagMap).sort((a,b)=>tagMap[b]-tagMap[a]);
-  renderCBs('filter-tags',tags,activeTags,tagMap);
+  const tm={};items.forEach(i=>i.tags.forEach(t=>tm[t]=(tm[t]||0)+1));
+  const tags=Object.keys(tm).sort((a,b)=>tm[b]-tm[a]);
+  renderCBs('fl-tags',tags,aTags,tm);
 }
 
-function renderCBs(id,values,activeSet,countMap){
+function renderCBs(id,vals,activeSet,cmap){
   const el=document.getElementById(id);
-  if(!values.length){el.innerHTML='<span style="font-size:12px;color:var(--muted)">暫無資料</span>';return;}
-  el.innerHTML=values.map(v=>`
-    <label class="filter-item">
-      <input type="checkbox" value="${v}" ${activeSet.has(v)?'checked':''} onchange="toggleFilter('${id}','${v}',this.checked)">
+  if(!vals.length){el.innerHTML='<span style="font-size:11px;color:var(--muted)">—</span>';return;}
+  el.innerHTML=vals.map(v=>`
+    <label class="filter-row">
+      <input type="checkbox" value="${v}" ${activeSet.has(v)?'checked':''} onchange="tog('${id}','${v}',this.checked)">
       <span class="flabel">${v}</span>
-      ${countMap?`<span class="count">${countMap[v]}</span>`:''}
+      ${cmap?`<span class="cnt">${cmap[v]}</span>`:''}
     </label>`).join('');
 }
 
-function toggleFilter(gid,val,checked){
-  const map={'filter-style':activeStyles,'filter-doll':activeDolls,'filter-tags':activeTags};
-  if(checked)map[gid].add(val);else map[gid].delete(val);
+function tog(gid,val,on){
+  const m={'fl-style':aStyles,'fl-doll':aDolls,'fl-tags':aTags};
+  on?m[gid].add(val):m[gid].delete(val);
   applyFilters();
 }
 
 function applyFilters(){
-  const q=(document.getElementById('searchInput').value||'').toLowerCase();
-  const sMin=parseFloat(document.getElementById('size-min').value)||null;
-  const sMax=parseFloat(document.getElementById('size-max').value)||null;
-  const filtered=allItems.filter(item=>{
+  const q=(document.getElementById('searchQ').value||'').toLowerCase();
+  const sMin=parseFloat(document.getElementById('sz-min').value)||null;
+  const sMax=parseFloat(document.getElementById('sz-max').value)||null;
+  const f=items.filter(item=>{
     if(q&&!item.name.toLowerCase().includes(q)&&!item.doll.toLowerCase().includes(q))return false;
-    if(activeStyles.size&&!activeStyles.has(item.style))return false;
-    if(activeDolls.size&&!activeDolls.has(item.doll))return false;
-    if(activeTags.size&&![...activeTags].every(t=>item.tags.includes(t)))return false;
+    if(aStyles.size&&!aStyles.has(item.style))return false;
+    if(aDolls.size&&!aDolls.has(item.doll))return false;
+    if(aTags.size&&![...aTags].every(t=>item.tags.includes(t)))return false;
     if(sMin!==null&&(item.size===null||item.size<sMin))return false;
     if(sMax!==null&&(item.size===null||item.size>sMax))return false;
     return true;
   });
-  document.getElementById('resultBar').textContent=`共 ${filtered.length} 件`;
+  document.getElementById('rcount').textContent=`${f.length} ITEMS`;
   const g=document.getElementById('gallery');
-  if(!filtered.length){g.innerHTML='<div class="empty">沒有符合條件的造型</div>';return;}
-  g.innerHTML=filtered.map(item=>`
+  if(!f.length){g.innerHTML='<div class="empty">No results found.</div>';return;}
+  g.innerHTML=f.map(item=>`
     <div class="card" onclick='openDetail(${JSON.stringify(item).replace(/'/g,"&#39;")})'>
-      <div class="card-img">${item.cover?`<img src="${item.cover}" alt="${item.name}" loading="lazy">`:'<div class="card-no-img">◻</div>'}</div>
+      <div class="card-img" style="aspect-ratio:1">
+        ${item.cover?`<img src="${item.cover}" alt="${item.name}" loading="lazy">`:`<div class="card-no-img" style="aspect-ratio:1">○</div>`}
+      </div>
       <div class="card-body">
+        <div class="card-num">No.${item.idx}</div>
         <div class="card-title">${item.name}</div>
-        <div class="card-meta">${[item.doll,item.size?item.size+'cm':''].filter(Boolean).join(' · ')}</div>
-        <div class="tags">${item.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+        <div class="card-meta">${[item.doll,item.size?item.size+'cm':''].filter(Boolean).join('  ·  ')}</div>
+        <div class="tag-list">${item.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
       </div>
     </div>`).join('');
 }
 
 function clearFilters(){
-  activeStyles.clear();activeDolls.clear();activeTags.clear();
-  document.getElementById('size-min').value='';
-  document.getElementById('size-max').value='';
-  document.getElementById('searchInput').value='';
-  document.querySelectorAll('.filter-item input').forEach(cb=>cb.checked=false);
+  aStyles.clear();aDolls.clear();aTags.clear();
+  document.getElementById('sz-min').value='';
+  document.getElementById('sz-max').value='';
+  document.getElementById('searchQ').value='';
+  document.querySelectorAll('.filter-row input').forEach(c=>c.checked=false);
   applyFilters();
 }
 
+function toggleSidebar(){
+  const s=document.getElementById('sidebar');
+  s.style.display=s.style.display==='none'?'':'none';
+}
+
 function openDetail(item){
-  document.getElementById('detailContent').innerHTML=`
-    ${item.cover?`<img class="detail-cover" src="${item.cover}" alt="${item.name}">`:''}
-    <div class="detail-name">${item.name}</div>
+  document.getElementById('detContent').innerHTML=`
+    ${item.cover?`<img class="detail-img" src="${item.cover}" alt="${item.name}">`:''}
+    <div class="detail-title">${item.name}</div>
     <div class="detail-rows">
-      ${item.doll?`<div class="detail-row"><span class="dl">試穿娃娃</span><span>${item.doll}</span></div>`:''}
-      ${item.style?`<div class="detail-row"><span class="dl">款式</span><span>${item.style}</span></div>`:''}
-      ${item.size?`<div class="detail-row"><span class="dl">尺寸</span><span>${item.size} cm</span></div>`:''}
-      ${item.origin?`<div class="detail-row"><span class="dl">產地</span><span>${item.origin}</span></div>`:''}
-      ${item.tags.length?`<div class="detail-row"><span class="dl">標籤</span><div class="tags">${item.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div></div>`:''}
-      ${item.shop?`<div class="detail-row"><span class="dl">商家</span><a href="${item.shop.startsWith('http')?item.shop:'https://'+item.shop}" target="_blank" style="color:var(--text);word-break:break-all;text-decoration:underline">${item.shop}</a></div>`:''}
-      ${item.note?`<div class="detail-row"><span class="dl">備註</span><span>${item.note}</span></div>`:''}
+      ${item.doll?`<div class="dr"><span class="dk">娃娃</span><span>${item.doll}</span></div>`:''}
+      ${item.style?`<div class="dr"><span class="dk">款式</span><span>${item.style}</span></div>`:''}
+      ${item.size?`<div class="dr"><span class="dk">尺寸</span><span>${item.size} cm</span></div>`:''}
+      ${item.origin?`<div class="dr"><span class="dk">產地</span><span>${item.origin}</span></div>`:''}
+      ${item.tags.length?`<div class="dr"><span class="dk">標籤</span><div class="tag-list">${item.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div></div>`:''}
+      ${item.shop?`<div class="dr"><span class="dk">商家</span><a href="${item.shop.startsWith('http')?item.shop:'https://'+item.shop}" target="_blank" style="color:var(--text);text-decoration:underline;word-break:break-all">${item.shop}</a></div>`:''}
+      ${item.note?`<div class="dr"><span class="dk">備註</span><span style="line-height:1.6">${item.note}</span></div>`:''}
     </div>`;
-  document.getElementById('detailModal').classList.add('open');
+  document.getElementById('detModal').classList.add('open');
 }
 
-function openUpload(){document.getElementById('uploadModal').classList.add('open');}
-function closeUpload(){document.getElementById('uploadModal').classList.remove('open');}
+function openUpload(){document.getElementById('upModal').classList.add('open');}
+function closeUpload(){document.getElementById('upModal').classList.remove('open');}
 
-function handleFile(file){
-  if(!file)return;
-  selectedFile=file;
-  const reader=new FileReader();
-  reader.onload=e=>{
-    const prev=document.getElementById('preview');
-    prev.src=e.target.result;prev.style.display='block';
-    document.getElementById('uploadText').textContent=file.name;
-  };
-  reader.readAsDataURL(file);
+function handleFile(f){
+  if(!f)return;selFile=f;
+  const r=new FileReader();
+  r.onload=e=>{
+    const p=document.getElementById('upPreview');
+    p.src=e.target.result;p.style.display='block';
+    document.getElementById('upText').textContent=f.name;
+  };r.readAsDataURL(f);
 }
-
 function handleDrop(e){
   e.preventDefault();
-  document.getElementById('uploadArea').classList.remove('dragover');
+  document.getElementById('upZone').classList.remove('over');
   handleFile(e.dataTransfer.files[0]);
 }
 
-async function uploadToSupabase(file){
+async function uploadImg(file){
   const ext=file.name.split('.').pop().toLowerCase();
-  const filename=`${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-  const res=await fetch(`${SUPABASE_URL}/storage/v1/object/outfit-photos/${filename}`,{
+  const fname=`${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const res=await fetch(`${SB_URL}/storage/v1/object/outfit-photos/${fname}`,{
     method:'POST',
-    headers:{'Authorization':`Bearer ${SUPABASE_KEY}`,'Content-Type':file.type,'x-upsert':'true'},
+    headers:{'Authorization':`Bearer ${SB_KEY}`,'Content-Type':file.type,'x-upsert':'true'},
     body:file
   });
-  if(!res.ok){const err=await res.text();throw new Error(err);}
-  return`${BUCKET_URL}/${filename}`;
+  if(!res.ok){const t=await res.text();throw new Error(t);}
+  return`${BUCKET}/${fname}`;
 }
 
 async function submitForm(){
   const name=document.getElementById('f-name').value.trim();
   if(!name){setStatus('請填寫造型名稱','err');return;}
-  if(!selectedFile){setStatus('請選擇照片','err');return;}
-  const btn=document.getElementById('submitBtn');
-  btn.disabled=true;setStatus('上傳照片中...','');
+  if(!selFile){setStatus('請選擇照片','err');return;}
+  const btn=document.getElementById('subBtn');
+  btn.disabled=true;setStatus('Uploading image...','');
   try{
-    const imageUrl=await uploadToSupabase(selectedFile);
-    setStatus('寫入資料庫...','');
+    const imageUrl=await uploadImg(selFile);
+    setStatus('Writing to Notion...','');
     const tagsRaw=document.getElementById('f-tags').value;
     const tags=tagsRaw?tagsRaw.split(',').map(t=>t.trim()).filter(Boolean):[];
     const shop=document.getElementById('f-shop').value.trim();
-    const res=await fetch(EDGE_URL,{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':`Bearer ${SUPABASE_KEY}`},
+    const res=await fetch(EDGE,{
+      method:'POST',headers:hdrs,
       body:JSON.stringify({action:'create',data:{
         name,imageUrl,
         doll:document.getElementById('f-doll').value.trim(),
@@ -385,31 +475,31 @@ async function submitForm(){
         origin:document.getElementById('f-origin').value,
       }})
     });
-    if(!res.ok)throw new Error(await res.text());
-    setStatus('上傳成功','ok');
-    setTimeout(()=>{closeUpload();resetForm();loadItems();},1200);
-  }catch(e){setStatus('失敗：'+e.message,'err');}
+    const rd=await res.json();
+    if(!res.ok||rd.object==='error')throw new Error(rd.message||JSON.stringify(rd));
+    setStatus('Done ✓','ok');
+    setTimeout(()=>{closeUpload();resetForm();load();},1200);
+  }catch(e){setStatus('Error: '+e.message,'err');}
   finally{btn.disabled=false;}
 }
 
 function setStatus(msg,cls){
   const el=document.getElementById('statusMsg');
-  el.textContent=msg;el.className='status '+(cls||'');
+  el.textContent=msg;el.className='status-msg '+(cls||'');
 }
-
 function resetForm(){
   ['f-name','f-doll','f-size','f-tags','f-shop','f-note'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('f-style').value='';
   document.getElementById('f-origin').value='';
-  document.getElementById('preview').style.display='none';
-  document.getElementById('uploadText').textContent='點擊或拖曳上傳照片';
-  selectedFile=null;setStatus('','');
+  document.getElementById('upPreview').style.display='none';
+  document.getElementById('upText').textContent='點擊或拖曳上傳';
+  selFile=null;setStatus('','');
 }
 
-document.getElementById('uploadModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeUpload();});
-document.getElementById('detailModal').addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.classList.remove('open');});
+document.getElementById('upModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeUpload();});
+document.getElementById('detModal').addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.classList.remove('open');});
 
-loadItems();
+load();
 </script>
 </body>
 </html>
