@@ -24,7 +24,8 @@ header{
   display:grid;grid-template-columns:1fr auto 1fr;
   align-items:center;padding:0 40px;height:60px;
   border-bottom:1px solid var(--border);background:var(--bg);
-  position:sticky;top:0;z-index:100;
+  position:sticky;top:0;
+  z-index: 160; /* 🌟 只要改這裡！原本是 100，改成 160 來壓過黑底遮罩 */
 }
 .header-left{display:flex;align-items:center;gap:20px}
 .header-issue{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.12em}
@@ -139,27 +140,30 @@ header{
 
 /* ── Main ── */
 .main-wrap {
-  width: 100%; /* 不再使用 flex，直接讓它佔滿整個寬度 */
+  width: 100%;
+  /* 重點：加上左右 40px 的留白對齊 Header，底部留白 80px 讓滑動見底時比較舒服 */
+  padding: 0 40px 80px; 
+  
+  /* (可選) 如果你不希望在大螢幕 (如 iMac) 上圖片無限往兩側延伸，可以加上這兩行限制最大寬度並置中： */
+  max-width: 1600px; 
+  margin: 0 auto;
 }
 
 .top-bar {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 20px 32px 16px; border-bottom: 1px solid var(--border);
+  /* 因為外層 main-wrap 已經有左右留白了，這裡的 padding 左右改為 0，讓底線精準對齊圖片邊緣 */
+  padding: 20px 0 16px; 
+  border-bottom: 1px solid var(--border);
 }
 
 .search-box {
   border: none; border-bottom: 1px solid var(--border);
-  padding: 6px 0; font-size: 13px; font-family: 'Noto Sans TC', sans-serif;
+  padding: 6px 0; font-size: 13px; font-family: 'Noto Sans TC',sans-serif;
   background: transparent; color: var(--text); outline: none; width: 240px;
 }
-
 .search-box:focus { border-bottom-color: var(--accent); }
 .search-box::placeholder { color: var(--muted); }
-
-.result-count { 
-  font-family: 'DM Mono', monospace; font-size: 10px; 
-  color: var(--muted); letter-spacing: .08em; 
-}
+.result-count { font-family: 'DM Mono',monospace; font-size: 10px; color: var(--muted); letter-spacing: .08em; }
 
 /* ── Gallery ── */
 .gallery {
@@ -283,6 +287,7 @@ header{
   }
 
   /* Main 區域微調 */
+  .main-wrap { padding: 0; }
   .top-bar { padding: 14px 16px; }
   .search-box { width: 160px; }
   
