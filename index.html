@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
 <title>娃衣圖書館</title>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600&family=Noto+Sans+TC:wght@300;400;500&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
 <style>
@@ -54,6 +54,14 @@ header{
   grid-template-columns: 0px 1fr;
 }
 
+.sidebar-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 140;
+  opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+}
+.sidebar-overlay.mobile-open {
+  opacity: 1; pointer-events: auto;
+}
+
 /* ── Sidebar ── */
 .sidebar {
   padding: 32px 20px;
@@ -78,6 +86,41 @@ header{
 /* 新增：預設隱藏手機版 Filter 按鈕 */
 .btn-filter-mobile {
   display: none;
+}
+
+/* ── Sidebar 搜尋框與更多按鈕 ── */
+.filter-search {
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  padding: 4px 0;
+  font-size: 11px;
+  font-family: 'Noto Sans TC', sans-serif;
+  background: transparent;
+  color: var(--text);
+  outline: none;
+  margin-bottom: 8px;
+}
+
+.filter-search:focus {
+  border-bottom-color: var(--accent);
+}
+
+.show-more-btn {
+  background: none;
+  border: none;
+  font-size: 10px;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px 4px;
+  font-family: 'DM Mono', monospace;
+  letter-spacing: .06em;
+  margin-top: 2px;
+  text-align: left; /* 讓文字靠左對齊比較好看 */
+}
+
+.show-more-btn:hover {
+  color: var(--text);
 }
 
 .sidebar-block{margin-bottom:32px}
@@ -119,6 +162,10 @@ header{
   grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
   gap:0;
   padding:0;
+}
+/* 電腦端：側邊欄收合時，圖片基礎大小變大 */
+.layout.sidebar-collapsed .gallery {
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
 }
 
 /* Masonry-ish: alternate card heights */
@@ -240,7 +287,8 @@ header{
 
   .top-bar{padding:14px 16px}
   .search-box{width:160px}
-  .gallery{grid-template-columns:repeat(2,1fr)}
+  .gallery { grid-template-columns: repeat(2, 1fr); }
+  .layout.sidebar-collapsed .gallery { grid-template-columns: repeat(2, 1fr);
   .card:nth-child(n) .card-img{aspect-ratio:1}
 }
 
@@ -275,6 +323,8 @@ header{
 </header>
 
 <div class="layout">
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+  
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-block">
       <span class="sidebar-label">款式</span>
@@ -534,10 +584,9 @@ function toggleSidebar() {
   const isMobile = window.innerWidth <= 640;
   
   if (isMobile) {
-    // 手機端：切換側邊欄的 .mobile-open 類別
     document.getElementById('sidebar').classList.toggle('mobile-open');
+    document.getElementById('sidebarOverlay').classList.toggle('mobile-open'); // 新增這行
   } else {
-    // 電腦端：切換外層 .layout 的 .sidebar-collapsed 類別
     document.querySelector('.layout').classList.toggle('sidebar-collapsed');
   }
 }
