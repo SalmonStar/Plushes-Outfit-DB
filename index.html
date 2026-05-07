@@ -41,16 +41,45 @@ header{
 }
 .upload-btn:hover{opacity:.75}
 
-/* ── Layout ── */
-.layout{display:flex;min-height:calc(100vh - 60px)}
+/* ── Layout (使用 Grid 優化動畫) ── */
+.layout {
+  display: grid;
+  grid-template-columns: 220px 1fr; /* 預設側邊欄寬 220px */
+  min-height: calc(100vh - 60px);
+  transition: grid-template-columns 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 桌面端收合狀態：將側邊欄寬度縮為 0 */
+.layout.sidebar-collapsed {
+  grid-template-columns: 0px 1fr;
+}
 
 /* ── Sidebar ── */
-.sidebar{
-  width:200px;flex-shrink:0;padding:32px 20px;
-  border-right:1px solid var(--border);
-  position:sticky;top:60px;height:calc(100vh - 60px);overflow-y:auto;
-  background:var(--bg);
+.sidebar {
+  padding: 32px 20px;
+  border-right: 1px solid var(--border);
+  position: sticky;
+  top: 60px;
+  height: calc(100vh - 60px);
+  overflow-y: auto;
+  overflow-x: hidden; /* 收合時防止內容溢出 */
+  background: var(--bg);
+  transition: opacity 0.2s ease, padding 0.3s ease;
+  white-space: nowrap; /* 收合過程防止文字斷行跳動 */
 }
+
+/* 桌面端收合時的側邊欄狀態 */
+.layout.sidebar-collapsed .sidebar {
+  opacity: 0;
+  padding: 32px 0; /* 移除左右 padding 避免佔用空間 */
+  pointer-events: none;
+}
+
+/* 新增：預設隱藏手機版 Filter 按鈕 */
+.btn-filter-mobile {
+  display: none;
+}
+
 .sidebar-block{margin-bottom:32px}
 .sidebar-label{
   font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.15em;
@@ -70,7 +99,7 @@ header{
 .clear-all:hover{color:var(--text)}
 
 /* ── Main ── */
-.main-wrap{flex:1;min-width:0}
+.main-wrap{flex:1;min-width:0;}
 .top-bar{
   display:flex;align-items:center;justify-content:space-between;
   padding:20px 32px 16px;border-bottom:1px solid var(--border);
@@ -87,7 +116,7 @@ header{
 /* ── Gallery ── */
 .gallery{
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+  grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
   gap:0;
   padding:0;
 }
@@ -176,7 +205,39 @@ header{
 @media(max-width:640px){
   header{padding:0 20px}
   .header-issue,.logo-en{display:none}
-  .sidebar{display:none}
+  
+  /* 按鈕顯示切換：隱藏 Index 和電腦版 Filter，顯示手機版 Filter */
+  .btn-index { display: none; }
+  .btn-filter-desktop { display: none; }
+  .btn-filter-mobile { display: block; }
+
+  /* 恢復單欄佈局 */
+  .layout {
+    display: block;
+  }
+
+  /* 將側邊欄改造成手機抽屜選單 (Off-canvas) */
+  .sidebar {
+    display: block !important; /* 覆蓋掉原本的隱藏 */
+    position: fixed;
+    top: 60px;
+    left: 0;
+    width: 240px;
+    height: calc(100vh - 60px);
+    background: var(--surface);
+    z-index: 150;
+    box-shadow: 4px 0 12px rgba(0,0,0,0.08);
+    transform: translateX(-100%); /* 預設往左收合隱藏 */
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 1 !important; 
+    padding: 24px 20px;
+  }
+
+  /* 手機端側邊欄展開狀態 */
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
   .top-bar{padding:14px 16px}
   .search-box{width:160px}
   .gallery{grid-template-columns:repeat(2,1fr)}
@@ -200,14 +261,15 @@ header{
 <header>
   <div class="header-left">
     <span class="header-issue">VOL.01</span>
-    <button class="nav-link" onclick="clearFilters()">INDEX</button>
+    <button class="nav-link btn-index" onclick="clearFilters()">INDEX</button>
+    <button class="nav-link btn-filter-mobile" onclick="toggleSidebar()">FILTER</button>
   </div>
   <div class="header-logo">
     <span class="logo-jp">娃衣圖書館</span>
     <span class="logo-en">PLUSHES OUTFIT ARCHIVE</span>
   </div>
   <div class="header-right">
-    <button class="nav-link" id="filterToggle" onclick="toggleSidebar()">FILTER</button>
+    <button class="nav-link btn-filter-desktop" id="filterToggle" onclick="toggleSidebar()">FILTER</button>
     <button class="upload-btn" onclick="openUpload()">SUBMIT</button>
   </div>
 </header>
@@ -422,7 +484,11 @@ function tog(gid,val,on){
   applyFilters();
 }
 
+let _ft=null;
 function applyFilters(){
+  if(_ft)clearTimeout(_ft);_ft=setTimeout(_doFilter,60);
+}
+function _doFilter(){
   const q=(document.getElementById('searchQ').value||'').toLowerCase();
   const sMin=parseFloat(document.getElementById('sz-min').value)||null;
   const sMax=parseFloat(document.getElementById('sz-max').value)||null;
@@ -441,7 +507,7 @@ function applyFilters(){
   g.innerHTML=f.map(item=>`
     <div class="card" onclick='openDetail(${JSON.stringify(item).replace(/'/g,"&#39;")})'>
       <div class="card-img" style="aspect-ratio:1">
-        ${item.cover?`<img src="${item.cover}" alt="${item.name}" loading="lazy">`:`<div class="card-no-img" style="aspect-ratio:1">○</div>`}
+        ${item.cover?`<img src="${item.cover}" alt="${item.name}" loading="lazy" decoding="async">`:`<div class="card-no-img" style="aspect-ratio:1">○</div>`}
       </div>
       <div class="card-body">
         <div class="card-num">No.${item.idx}</div>
@@ -464,9 +530,16 @@ function clearFilters(){
   applyFilters();
 }
 
-function toggleSidebar(){
-  const s=document.getElementById('sidebar');
-  s.style.display=s.style.display==='none'?'':'none';
+function toggleSidebar() {
+  const isMobile = window.innerWidth <= 640;
+  
+  if (isMobile) {
+    // 手機端：切換側邊欄的 .mobile-open 類別
+    document.getElementById('sidebar').classList.toggle('mobile-open');
+  } else {
+    // 電腦端：切換外層 .layout 的 .sidebar-collapsed 類別
+    document.querySelector('.layout').classList.toggle('sidebar-collapsed');
+  }
 }
 
 function openDetail(item){
