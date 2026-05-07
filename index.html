@@ -309,7 +309,7 @@ async function load(){
       return{
         idx:String(i+1).padStart(3,'0'),
         id:pg.id,
-        name:p['名稱']?.title?.[0]?.text?.content||'Untitled',
+        name:p['娃衣名稱']?.title?.[0]?.text?.content||'Untitled',
         doll:p['試穿娃娃']?.select?.name||'',
         style:p['款式']?.select?.name||'',
         size:p['娃娃尺寸']?.number||null,
