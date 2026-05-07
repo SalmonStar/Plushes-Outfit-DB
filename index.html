@@ -169,13 +169,19 @@ header{
 }
 
 /* Masonry-ish: alternate card heights */
-.card{
-  background:var(--surface);
-  cursor:pointer;overflow:hidden;
-  border-right:1px solid var(--border);
-  border-bottom:1px solid var(--border);
-  transition:background .15s;
-  position:relative;
+.card {
+  background: var(--surface);
+  cursor: pointer;
+  overflow: hidden;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  transition: background .15s;
+  position: relative;
+  
+  /* ===== 方案三：CSS 渲染效能優化 ===== */
+  content-visibility: auto; 
+  /* 告訴瀏覽器還沒載入/還沒滑到的卡片，先預設佔用多大的空間，避免畫面狂跳 */
+  contain-intrinsic-size: 280px 380px; 
 }
 .card:hover{background:#f5f5f2}
 .card:hover .card-img img{transform:scale(1.05)}
@@ -445,6 +451,16 @@ async function load(){
     const d=await r.json();
     items=(d.results||[]).map((pg,i)=>{
       const p=pg.properties;
+      
+      // ===== 方案二：動態壓縮圖片 URL =====
+      let rawCover = pg.cover?.external?.url || pg.cover?.file?.url || null;
+      // 確保是 Supabase 的圖片才做替換，避免破壞其他外部圖床連結
+      if (rawCover && rawCover.includes(SB_URL)) {
+        // 將 /object/public/ 替換為 /render/image/public/，並加上縮圖參數 (寬度400px，品質80)
+        rawCover = rawCover.replace('/object/public/', '/render/image/public/') + '?width=400&quality=80';
+      }
+      // =====================================
+
       return{
         idx:String(i+1).padStart(3,'0'),
         id:pg.id,
@@ -456,7 +472,7 @@ async function load(){
         note:p['備註']?.rich_text?.[0]?.text?.content||'',
         shop:p['商家連結或名稱']?.rich_text?.[0]?.text?.content||'',
         origin:p['產地']?.select?.name||'',
-        cover:pg.cover?.external?.url||pg.cover?.file?.url||null,
+        cover: rawCover, // 這裡改用我們處理過後的 rawCover
       };
     });
     buildFilters();
@@ -637,6 +653,42 @@ function handleDrop(e){
   handleFile(e.dataTransfer.files[0]);
 }
 
+// 新增：前端圖片壓縮函數
+async function compressImage(file, maxSize = 800) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+
+        // 計算等比例縮放後的尺寸
+        if (width > height && width > maxSize) {
+          height *= maxSize / width;
+          width = maxSize;
+        } else if (height > maxSize) {
+          width *= maxSize / height;
+          height = maxSize;
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // 轉換為 WebP 格式，品質設定為 0.8 (80%)
+        canvas.toBlob((blob) => {
+          resolve(new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".webp", { type: 'image/webp' }));
+        }, 'image/webp', 0.8);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 async function uploadImg(file){
   const ext=file.name.split('.').pop().toLowerCase();
   const fname=`${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
@@ -656,7 +708,9 @@ async function submitForm(){
   const btn=document.getElementById('subBtn');
   btn.disabled=true;setStatus('Uploading image...','');
   try{
-    const imageUrl=await uploadImg(selFile);
+    setStatus('Compressing image...','');
+    const compressedFile = await compressImage(selFile); 
+    const imageUrl = await uploadImg(compressedFile);
     setStatus('Writing to Notion...','');
     const tagsRaw=document.getElementById('f-tags').value;
     const tags=tagsRaw?tagsRaw.split(',').map(t=>t.trim()).filter(Boolean):[];
