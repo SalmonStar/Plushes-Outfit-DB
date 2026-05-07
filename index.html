@@ -257,9 +257,10 @@ header{
     <button class="modal-x" onclick="closeUpload()">×</button>
     <div class="modal-title">Submit Outfit</div>
 
-    <div class="fg">
+    <div class="fg" style="position:relative">
       <label>造型名稱 *</label>
-      <input type="text" id="f-name" placeholder="例：台大米白帽T">
+      <input type="text" id="f-name" placeholder="例：台大米白帽T" autocomplete="off" oninput="showAC(this,'ac-name')">
+      <div id="ac-name" class="ac-list"></div>
     </div>
     <div class="fg">
       <label>照片 *</label>
@@ -276,7 +277,7 @@ header{
     </div>
     <div class="two">
       <div class="fg" style="position:relative"><label>試穿娃娃</label><input type="text" id="f-doll" placeholder="例：SUNSUN玩偶" autocomplete="off" oninput="showAC(this,'ac-doll')"><div id="ac-doll" class="ac-list"></div></div>
-      <div class="fg" style="position:relative"><label>款式</label><input type="text" id="f-style" placeholder="例：上衣" autocomplete="off" oninput="showAC(this,'ac-style')"><div id="ac-style" class="ac-list"></div></div>
+      <div class="fg" style="position:relative"><label>款式（逗號分隔）</label><input type="text" id="f-style" placeholder="例：上衣, 配件" autocomplete="off" oninput="showAC(this,'ac-style')"><div id="ac-style" class="ac-list"></div></div>
     </div>
     <div class="two">
       <div class="fg"><label>娃娃尺寸 cm</label><input type="number" id="f-size" placeholder="28"></div>
@@ -530,7 +531,7 @@ async function submitForm(){
       method:'POST',headers:hdrs,
       body:JSON.stringify({action:'create',data:{
         name,imageUrl,
-        doll:document.getElementById('f-doll').value.split(',').map(s=>s.trim()).filter(Boolean),
+        doll:document.getElementById('f-doll').value.trim(),
         style:document.getElementById('f-style').value.split(',').map(s=>s.trim()).filter(Boolean),
         size:document.getElementById('f-size').value,
         tags,
@@ -549,6 +550,7 @@ async function submitForm(){
 
 // ── Autocomplete ──
 const AC_SOURCES = {
+  'ac-name': () => [...new Set(items.map(i => i.name).filter(Boolean))].sort(),
   'ac-doll': () => [...new Set(items.flatMap(i => i.doll).filter(Boolean))].sort(),
   'ac-style': () => [...new Set(items.flatMap(i => i.style).filter(Boolean))].sort(),
   'ac-tags': () => {
@@ -592,7 +594,7 @@ function pickAC(e, inputId, listId, val) {
 }
 
 document.addEventListener('click', e => {
-  ['ac-doll','ac-style','ac-tags'].forEach(id => {
+  ['ac-name','ac-doll','ac-style','ac-tags'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
   });
