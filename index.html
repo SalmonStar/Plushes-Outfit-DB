@@ -191,6 +191,8 @@ header{
 
 .filter-search{width:100%;border:none;border-bottom:1px solid var(--border);padding:4px 0;font-size:11px;font-family:'Noto Sans TC',sans-serif;background:transparent;color:var(--text);outline:none;margin-bottom:8px}
 .filter-search:focus{border-bottom-color:var(--accent)}
+.show-more-btn{background:none;border:none;font-size:10px;color:var(--muted);cursor:pointer;padding:4px 4px;font-family:'DM Mono',monospace;letter-spacing:.06em;margin-top:2px}
+.show-more-btn:hover{color:var(--text)}
 </style>
 </head>
 <body>
@@ -232,6 +234,7 @@ header{
     </div>
     <div class="sidebar-block">
       <span class="sidebar-label">標籤</span>
+      <input class="filter-search" type="text" id="fs-tags" placeholder="搜尋..." oninput="filterSearch('fl-tags',this.value)">
       <div class="filter-list" id="fl-tags"></div>
     </div>
     <button class="clear-all" onclick="clearFilters()">CLEAR ALL</button>
@@ -321,8 +324,8 @@ async function load(){
         idx:String(i+1).padStart(3,'0'),
         id:pg.id,
         name:p['娃衣名稱']?.title?.[0]?.text?.content||'Untitled',
-        doll:p['試穿娃娃']?.multi_select?.map(t=>t.name).join(', ')||'',
-        style:p['款式']?.multi_select?.map(t=>t.name).join(', ')||'',
+        doll:p['試穿娃娃']?.multi_select?.map(t=>t.name)||[],
+        style:p['款式']?.multi_select?.map(t=>t.name)||[],
         size:p['娃娃尺寸']?.number||null,
         tags:p['標籤']?.multi_select?.map(t=>t.name)||[],
         note:p['備註']?.rich_text?.[0]?.text?.content||'',
@@ -353,15 +356,34 @@ function buildFilters(){
   renderCBs('fl-tags',tags,aTags,tm);
 }
 
-function renderCBs(id,vals,activeSet,cmap){
+function makeRow(id, v, activeSet, cmap) {
+  const checked = activeSet.has(v) ? 'checked' : '';
+  const cnt = cmap ? '<span class="cnt">' + cmap[v] + '</span>' : '';
+  return '<label class="filter-row">'
+    + '<input type="checkbox" value="' + v + '" ' + checked + ' onchange="tog(\'' + id + '\',\'' + v.replace(/'/g,"\\'") + '\',this.checked)">'
+    + '<span class="flabel">' + v + '</span>'
+    + cnt
+    + '</label>';
+}
+
+function renderCBs(id, vals, activeSet, cmap, maxShow=6) {
+  const el = document.getElementById(id);
+  if (!vals.length) { el.innerHTML = '<span style="font-size:11px;color:var(--muted)">—</span>'; return; }
+  const shown = vals.slice(0, maxShow);
+  const rest = vals.slice(maxShow);
+  let html = shown.map(v => makeRow(id, v, activeSet, cmap)).join('');
+  if (rest.length) {
+    html += '<div id="' + id + '-more" style="display:none">' + rest.map(v => makeRow(id, v, activeSet, cmap)).join('') + '</div>';
+    html += '<button class="show-more-btn" onclick="toggleMore(\'' + id + '-more\',this)">+ ' + rest.length + ' 更多</button>';
+  }
+  el.innerHTML = html;
+}
+
+function toggleMore(id,btn){
   const el=document.getElementById(id);
-  if(!vals.length){el.innerHTML='<span style="font-size:11px;color:var(--muted)">—</span>';return;}
-  el.innerHTML=vals.map(v=>`
-    <label class="filter-row">
-      <input type="checkbox" value="${v}" ${activeSet.has(v)?'checked':''} onchange="tog('${id}','${v}',this.checked)">
-      <span class="flabel">${v}</span>
-      ${cmap?`<span class="cnt">${cmap[v]}</span>`:''}
-    </label>`).join('');
+  const hidden=el.style.display==='none';
+  el.style.display=hidden?'':'none';
+  btn.textContent=hidden?'− 收起':'+ '+(el.children.length)+' 更多';
 }
 
 
@@ -386,8 +408,8 @@ function applyFilters(){
   const sMax=parseFloat(document.getElementById('sz-max').value)||null;
   const f=items.filter(item=>{
     if(q&&!item.name.toLowerCase().includes(q)&&!item.doll.toLowerCase().includes(q))return false;
-    if(aStyles.size&&!aStyles.has(item.style))return false;
-    if(aDolls.size&&!aDolls.has(item.doll))return false;
+    if(aStyles.size&&![...aStyles].some(s=>item.style.includes(s)))return false;
+    if(aDolls.size&&![...aDolls].some(d=>item.doll.includes(d)))return false;
     if(aTags.size&&![...aTags].every(t=>item.tags.includes(t)))return false;
     if(sMin!==null&&(item.size===null||item.size<sMin))return false;
     if(sMax!==null&&(item.size===null||item.size>sMax))return false;
@@ -404,8 +426,11 @@ function applyFilters(){
       <div class="card-body">
         <div class="card-num">No.${item.idx}</div>
         <div class="card-title">${item.name}</div>
-        <div class="card-meta">${[item.doll,item.size?item.size+'cm':''].filter(Boolean).join('  ·  ')}</div>
-        <div class="tag-list">${item.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+        <div class="card-meta">${[item.doll.join(' / '),item.size?item.size+'cm':''].filter(v=>v).join('  ·  ')}</div>
+        <div class="tag-list">
+          ${item.style.map(t=>`<span class="tag" style="border-color:var(--accent);color:var(--accent)">${t}</span>`).join('')}
+          ${item.tags.map(t=>`<span class="tag">${t}</span>`).join('')}
+        </div>
       </div>
     </div>`).join('');
 }
@@ -429,8 +454,8 @@ function openDetail(item){
     ${item.cover?`<img class="detail-img" src="${item.cover}" alt="${item.name}">`:''}
     <div class="detail-title">${item.name}</div>
     <div class="detail-rows">
-      ${item.doll?`<div class="dr"><span class="dk">娃娃</span><span>${item.doll}</span></div>`:''}
-      ${item.style?`<div class="dr"><span class="dk">款式</span><span>${item.style}</span></div>`:''}
+      ${item.doll.length?`<div class="dr"><span class="dk">娃娃</span><span>${item.doll.join(', ')}</span></div>`:''}
+      ${item.style.length?`<div class="dr"><span class="dk">款式</span><span>${item.style.join(', ')}</span></div>`:''}
       ${item.size?`<div class="dr"><span class="dk">尺寸</span><span>${item.size} cm</span></div>`:''}
       ${item.origin?`<div class="dr"><span class="dk">產地</span><span>${item.origin}</span></div>`:''}
       ${item.tags.length?`<div class="dr"><span class="dk">標籤</span><div class="tag-list">${item.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div></div>`:''}
@@ -486,8 +511,8 @@ async function submitForm(){
       method:'POST',headers:hdrs,
       body:JSON.stringify({action:'create',data:{
         name,imageUrl,
-        doll:document.getElementById('f-doll').value.trim(),
-        style:document.getElementById('f-style').value,
+        doll:document.getElementById('f-doll').value.split(',').map(s=>s.trim()).filter(Boolean),
+        style:document.getElementById('f-style').value.split(',').map(s=>s.trim()).filter(Boolean),
         size:document.getElementById('f-size').value,
         tags,
         note:document.getElementById('f-note').value.trim(),
@@ -501,8 +526,8 @@ async function submitForm(){
     setTimeout(()=>{closeUp
 // ── Autocomplete ──
 const AC_SOURCES = {
-  'ac-doll': () => [...new Set(items.flatMap(i => i.doll ? i.doll.split(', ') : []).filter(Boolean))].sort(),
-  'ac-style': () => [...new Set(items.flatMap(i => i.style ? i.style.split(', ') : []).filter(Boolean))].sort(),
+  'ac-doll': () => [...new Set(items.flatMap(i => i.doll).filter(Boolean))].sort(),
+  'ac-style': () => [...new Set(items.flatMap(i => i.style).filter(Boolean))].sort(),
   'ac-tags': () => {
     const tm = {};
     items.forEach(i => i.tags.forEach(t => tm[t] = (tm[t]||0)+1));
@@ -512,9 +537,9 @@ const AC_SOURCES = {
 
 function showAC(input, listId) {
   const rawQ = input.value;
-  // for tags, autocomplete the last token after comma
-  const isTag = listId === 'ac-tags';
-  const q = isTag ? rawQ.split(',').pop().trim().toLowerCase() : rawQ.trim().toLowerCase();
+  // for tags and style, autocomplete the last token after comma
+  const isMulti = listId === 'ac-tags' || listId === 'ac-style';
+  const q = isMulti ? rawQ.split(',').pop().trim().toLowerCase() : rawQ.trim().toLowerCase();
   const list = document.getElementById(listId);
   if (!q) { list.style.display = 'none'; return; }
   const opts = AC_SOURCES[listId]().filter(v => v.toLowerCase().includes(q)).slice(0, 10);
@@ -531,7 +556,7 @@ function showAC(input, listId) {
 function pickAC(e, inputId, listId, val) {
   e.preventDefault();
   const input = document.getElementById(inputId);
-  if (listId === 'ac-tags') {
+  if (listId === 'ac-tags' || listId === 'ac-style') {
     // replace last token
     const parts = input.value.split(',');
     parts[parts.length - 1] = ' ' + val;
