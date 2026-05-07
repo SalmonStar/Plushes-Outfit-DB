@@ -41,49 +41,45 @@ header{
 }
 .upload-btn:hover{opacity:.75}
 
-/* ── Layout (使用 Grid 優化動畫) ── */
+/* ── Layout (改為單純區塊，讓主內容佔滿畫面) ── */
 .layout {
-  display: grid;
-  grid-template-columns: 220px 1fr; /* 預設側邊欄寬 220px */
+  display: block;
   min-height: calc(100vh - 60px);
-  transition: grid-template-columns 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* 桌面端收合狀態：將側邊欄寬度縮為 0 */
-.layout.sidebar-collapsed {
-  grid-template-columns: 0px 1fr;
-}
-
+/* ── 懸浮遮罩 (電腦與手機通用) ── */
 .sidebar-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 140;
   opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
 }
-.sidebar-overlay.mobile-open {
+/* 開啟時顯示遮罩 */
+.sidebar-overlay.open {
   opacity: 1; pointer-events: auto;
 }
 
-/* ── Sidebar ── */
+/* ── Sidebar (全面改為抽屜式浮動面板) ── */
 .sidebar {
-  padding: 32px 20px;
-  border-right: 1px solid var(--border);
-  position: sticky;
-  top: 60px;
+  position: fixed;
+  top: 60px; /* 電腦版從 Header 下方開始 */
+  left: 0;
+  width: 260px;
   height: calc(100vh - 60px);
+  background: var(--surface);
+  z-index: 150;
+  box-shadow: 4px 0 12px rgba(0,0,0,0.15);
+  transform: translateX(-100%); /* 預設收合在畫面左側外 */
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 32px 24px 80px; /* 底部留大空間，確保不會擋住 Clear All 按鈕 */
   overflow-y: auto;
-  overflow-x: hidden; /* 收合時防止內容溢出 */
-  background: var(--bg);
-  transition: opacity 0.2s ease, padding 0.3s ease;
-  white-space: nowrap; /* 收合過程防止文字斷行跳動 */
+  overflow-x: hidden;
 }
 
-/* 桌面端收合時的側邊欄狀態 */
-.layout.sidebar-collapsed .sidebar {
-  opacity: 0;
-  padding: 32px 0; /* 移除左右 padding 避免佔用空間 */
-  pointer-events: none;
+/* 開啟時側邊欄滑入 */
+.sidebar.open {
+  transform: translateX(0);
 }
 
-/* 新增：預設隱藏手機版 Filter 按鈕 */
+/* 預設隱藏手機版 Filter 按鈕 */
 .btn-filter-mobile {
   display: none;
 }
@@ -142,30 +138,36 @@ header{
 .clear-all:hover{color:var(--text)}
 
 /* ── Main ── */
-.main-wrap{flex:1;min-width:0;}
-.top-bar{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:20px 32px 16px;border-bottom:1px solid var(--border);
+.main-wrap {
+  width: 100%; /* 不再使用 flex，直接讓它佔滿整個寬度 */
 }
-.search-box{
-  border:none;border-bottom:1px solid var(--border);
-  padding:6px 0;font-size:13px;font-family:'Noto Sans TC',sans-serif;
-  background:transparent;color:var(--text);outline:none;width:240px;
+
+.top-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 32px 16px; border-bottom: 1px solid var(--border);
 }
-.search-box:focus{border-bottom-color:var(--accent)}
-.search-box::placeholder{color:var(--muted)}
-.result-count{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.08em}
+
+.search-box {
+  border: none; border-bottom: 1px solid var(--border);
+  padding: 6px 0; font-size: 13px; font-family: 'Noto Sans TC', sans-serif;
+  background: transparent; color: var(--text); outline: none; width: 240px;
+}
+
+.search-box:focus { border-bottom-color: var(--accent); }
+.search-box::placeholder { color: var(--muted); }
+
+.result-count { 
+  font-family: 'DM Mono', monospace; font-size: 10px; 
+  color: var(--muted); letter-spacing: .08em; 
+}
 
 /* ── Gallery ── */
-.gallery{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
-  gap:0;
-  padding:0;
-}
-/* 電腦端：側邊欄收合時，圖片基礎大小變大 */
-.layout.sidebar-collapsed .gallery {
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+.gallery {
+  display: grid;
+  /* 因為側邊欄改為浮動，畫面空間變大了，我們直接讓圖片預設基礎大小變大（例如 320px） */
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 0;
+  padding: 0;
 }
 
 /* Masonry-ish: alternate card heights */
@@ -178,11 +180,12 @@ header{
   transition: background .15s;
   position: relative;
   
-  /* ===== 方案三：CSS 渲染效能優化 ===== */
+  /* ===== CSS 渲染效能優化 ===== */
   content-visibility: auto; 
-  /* 告訴瀏覽器還沒載入/還沒滑到的卡片，先預設佔用多大的空間，避免畫面狂跳 */
-  contain-intrinsic-size: 280px 380px; 
+  /* 配合上方 320px 的設定，微調預設佔用空間，讓捲動更滑順 */
+  contain-intrinsic-size: 320px 380px; 
 }
+
 .card:hover{background:#f5f5f2}
 .card:hover .card-img img{transform:scale(1.05)}
 .card-img{width:100%;overflow:hidden;background:var(--light)}
@@ -256,58 +259,36 @@ header{
 .dk{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;min-width:64px;padding-top:2px;flex-shrink:0}
 
 @media(max-width:640px){
-  header{padding:0 20px}
-  .header-issue,.logo-en{display:none}
+  header { padding: 0 20px; }
+  .header-issue, .logo-en { display: none; }
   
   /* 按鈕顯示切換：隱藏 Index 和電腦版 Filter，顯示手機版 Filter */
   .btn-index { display: none; }
   .btn-filter-desktop { display: none; }
   .btn-filter-mobile { display: block; }
 
-  /* 恢復單欄佈局 */
-  .layout {
-    display: block;
-  }
-
+  /* 手機版 Sidebar：從螢幕最頂端開始，覆蓋 Header，並解決 iOS 底部遮擋問題 */
   .sidebar {
-    display: block !important;
-    position: fixed;
-    top: 0; /* 重點 1：改為 0，讓它對齊螢幕最上方 */
-    left: 0;
-    width: 240px;
-    
-    /* 重點 2：使用 100dvh 解決 iOS 底部遮擋問題 (加上 100vh 當作舊瀏覽器的備案) */
+    top: 0;
+    width: 260px; /* 寬度與電腦版統一，讓視覺更一致 */
     height: 100vh;
-    height: 100dvh; 
-    
-    background: var(--surface);
-    z-index: 200; /* 確保層級比 Header 還高 */
-    box-shadow: 4px 0 12px rgba(0,0,0,0.08);
-    transform: translateX(-100%);
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    opacity: 1 !important; 
-    
-    /* 重點 3：上方留空避開手機時間/電量狀態列，下方留 80px 的超大安全距離，確保按鈕絕對按得到！ */
-    padding: 48px 20px 80px; 
-    
-    overflow-y: auto; /* 確保內容過多時可以順暢滑動 */
+    height: 100dvh; /* 解決 Safari 底部導航列遮擋的關鍵 */
+    padding: 48px 24px 80px; 
+    z-index: 200; /* 確保層級比 Header 的 100 高 */
   }
 
-  /* 確保遮罩層級也比 Header 高，這樣才能完美蓋住畫面 */
+  /* 確保遮罩層級也比 Header 高，完美蓋住整個背景畫面 */
   .sidebar-overlay {
     z-index: 190;
   }
 
-  /* 手機端側邊欄展開狀態 */
-  .sidebar.mobile-open {
-    transform: translateX(0);
-  }
-
-  .top-bar{padding:14px 16px}
-  .search-box{width:160px}
+  /* Main 區域微調 */
+  .top-bar { padding: 14px 16px; }
+  .search-box { width: 160px; }
+  
+  /* 畫廊強制雙排顯示，且圖片比例固定為正方形 */
   .gallery { grid-template-columns: repeat(2, 1fr); }
-  .layout.sidebar-collapsed .gallery { grid-template-columns: repeat(2, 1fr);
-  .card:nth-child(n) .card-img{aspect-ratio:1}
+  .card:nth-child(n) .card-img { aspect-ratio: 1; }
 }
 
 .ac-list{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--border);z-index:50;max-height:200px;overflow-y:auto;display:none;box-shadow:0 4px 12px rgba(0,0,0,.08)}
@@ -609,14 +590,8 @@ function clearFilters(){
 }
 
 function toggleSidebar() {
-  const isMobile = window.innerWidth <= 640;
-  
-  if (isMobile) {
-    document.getElementById('sidebar').classList.toggle('mobile-open');
-    document.getElementById('sidebarOverlay').classList.toggle('mobile-open'); // 新增這行
-  } else {
-    document.querySelector('.layout').classList.toggle('sidebar-collapsed');
-  }
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('open');
 }
 
 function openDetail(item){
