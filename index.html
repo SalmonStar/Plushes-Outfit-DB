@@ -263,21 +263,33 @@ header{
     display: block;
   }
 
-  /* 將側邊欄改造成手機抽屜選單 (Off-canvas) */
   .sidebar {
-    display: block !important; /* 覆蓋掉原本的隱藏 */
+    display: block !important;
     position: fixed;
-    top: 60px;
+    top: 0; /* 重點 1：改為 0，讓它對齊螢幕最上方 */
     left: 0;
     width: 240px;
-    height: calc(100vh - 60px);
+    
+    /* 重點 2：使用 100dvh 解決 iOS 底部遮擋問題 (加上 100vh 當作舊瀏覽器的備案) */
+    height: 100vh;
+    height: 100dvh; 
+    
     background: var(--surface);
-    z-index: 150;
+    z-index: 200; /* 確保層級比 Header 還高 */
     box-shadow: 4px 0 12px rgba(0,0,0,0.08);
-    transform: translateX(-100%); /* 預設往左收合隱藏 */
+    transform: translateX(-100%);
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     opacity: 1 !important; 
-    padding: 24px 20px;
+    
+    /* 重點 3：上方留空避開手機時間/電量狀態列，下方留 80px 的超大安全距離，確保按鈕絕對按得到！ */
+    padding: 48px 20px 80px; 
+    
+    overflow-y: auto; /* 確保內容過多時可以順暢滑動 */
+  }
+
+  /* 確保遮罩層級也比 Header 高，這樣才能完美蓋住畫面 */
+  .sidebar-overlay {
+    z-index: 190;
   }
 
   /* 手機端側邊欄展開狀態 */
