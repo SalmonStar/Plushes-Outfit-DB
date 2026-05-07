@@ -183,11 +183,14 @@ header{
   .card:nth-child(n) .card-img{aspect-ratio:1}
 }
 
-.ac-list{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--border);z-index:50;max-height:180px;overflow-y:auto;display:none}
-.ac-item{padding:8px 10px;font-size:12px;cursor:pointer;border-bottom:1px solid var(--border)}
+.ac-list{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--border);z-index:50;max-height:200px;overflow-y:auto;display:none;box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.ac-item{padding:9px 12px;font-size:12px;cursor:pointer;border-bottom:1px solid var(--border);color:var(--text)}
 .ac-item:last-child{border-bottom:none}
-.ac-item:hover{background:var(--bg)}
-.ac-item strong{font-weight:500}
+.ac-item:hover,.ac-item.focused{background:var(--bg)}
+.ac-item b{font-weight:600}
+
+.filter-search{width:100%;border:none;border-bottom:1px solid var(--border);padding:4px 0;font-size:11px;font-family:'Noto Sans TC',sans-serif;background:transparent;color:var(--text);outline:none;margin-bottom:8px}
+.filter-search:focus{border-bottom-color:var(--accent)}
 </style>
 </head>
 <body>
@@ -211,10 +214,12 @@ header{
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-block">
       <span class="sidebar-label">款式</span>
+      <input class="filter-search" type="text" id="fs-style" placeholder="搜尋..." oninput="filterSearch('fl-style',this.value)">
       <div class="filter-list" id="fl-style"></div>
     </div>
     <div class="sidebar-block">
       <span class="sidebar-label">試穿娃娃</span>
+      <input class="filter-search" type="text" id="fs-doll" placeholder="搜尋..." oninput="filterSearch('fl-doll',this.value)">
       <div class="filter-list" id="fl-doll"></div>
     </div>
     <div class="sidebar-block">
@@ -279,7 +284,7 @@ header{
         </select>
       </div>
     </div>
-    <div class="fg"><label>標籤（逗號分隔）</label><input type="text" id="f-tags" placeholder="休閒, 日系, 可愛"></div>
+    <div class="fg" style="position:relative"><label>標籤（逗號分隔）</label><input type="text" id="f-tags" placeholder="休閒, 日系, 可愛" autocomplete="off" oninput="showAC(this,'ac-tags')"><div id="ac-tags" class="ac-list"></div></div>
     <div class="fg"><label>商家連結</label><input type="text" id="f-shop" placeholder="https://..."></div>
     <div class="fg"><label>備註</label><textarea id="f-note" placeholder="尺寸建議、穿搭心得..."></textarea></div>
     <button class="submit-btn" id="subBtn" onclick="submitForm()">UPLOAD</button>
@@ -357,6 +362,16 @@ function renderCBs(id,vals,activeSet,cmap){
       <span class="flabel">${v}</span>
       ${cmap?`<span class="cnt">${cmap[v]}</span>`:''}
     </label>`).join('');
+}
+
+
+function filterSearch(listId, q) {
+  const rows = document.querySelectorAll('#' + listId + ' .filter-row');
+  rows.forEach(row => {
+    const label = row.querySelector('.flabel');
+    if (!label) return;
+    row.style.display = label.textContent.toLowerCase().includes(q.toLowerCase()) ? '' : 'none';
+  });
 }
 
 function tog(gid,val,on){
@@ -483,7 +498,59 @@ async function submitForm(){
     const rd=await res.json();
     if(!res.ok||rd.object==='error')throw new Error(rd.message||JSON.stringify(rd));
     setStatus('Done ✓','ok');
-    setTimeout(()=>{closeUpload();resetForm();load();},1200);
+    setTimeout(()=>{closeUp
+// ── Autocomplete ──
+const AC_SOURCES = {
+  'ac-doll': () => [...new Set(items.flatMap(i => i.doll ? i.doll.split(', ') : []).filter(Boolean))].sort(),
+  'ac-style': () => [...new Set(items.flatMap(i => i.style ? i.style.split(', ') : []).filter(Boolean))].sort(),
+  'ac-tags': () => {
+    const tm = {};
+    items.forEach(i => i.tags.forEach(t => tm[t] = (tm[t]||0)+1));
+    return Object.keys(tm).sort((a,b) => tm[b]-tm[a]);
+  },
+};
+
+function showAC(input, listId) {
+  const rawQ = input.value;
+  // for tags, autocomplete the last token after comma
+  const isTag = listId === 'ac-tags';
+  const q = isTag ? rawQ.split(',').pop().trim().toLowerCase() : rawQ.trim().toLowerCase();
+  const list = document.getElementById(listId);
+  if (!q) { list.style.display = 'none'; return; }
+  const opts = AC_SOURCES[listId]().filter(v => v.toLowerCase().includes(q)).slice(0, 10);
+  if (!opts.length) { list.style.display = 'none'; return; }
+  list.innerHTML = opts.map(v => {
+    const safe = v.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+    const safeQ = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const hi = safe.replace(new RegExp('(' + safeQ + ')', 'gi'), '<b>$1</b>');
+    return '<div class="ac-item" onmousedown="pickAC(event,\'' + input.id + '\',\'' + listId + '\',\'' + v.replace(/'/g,"\'") + '\')">' + hi + '</div>';
+  }).join('');
+  list.style.display = 'block';
+}
+
+function pickAC(e, inputId, listId, val) {
+  e.preventDefault();
+  const input = document.getElementById(inputId);
+  if (listId === 'ac-tags') {
+    // replace last token
+    const parts = input.value.split(',');
+    parts[parts.length - 1] = ' ' + val;
+    input.value = parts.join(',').replace(/^\s*,/, '') + ', ';
+  } else {
+    input.value = val;
+  }
+  document.getElementById(listId).style.display = 'none';
+  input.focus();
+}
+
+document.addEventListener('click', e => {
+  ['ac-doll','ac-style','ac-tags'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+});
+
+load();resetForm();load();},1200);
   }catch(e){setStatus('Error: '+e.message,'err');}
   finally{btn.disabled=false;}
 }
@@ -506,36 +573,6 @@ document.getElementById('detModal').addEventListener('click',e=>{if(e.target===e
 
 load();
 
-const acData = {
-  'ac-doll': () => [...new Set(items.map(i=>i.doll).filter(Boolean))],
-  'ac-style': () => [...new Set(items.flatMap(i=>i.style?i.style.split(', '):[]).filter(Boolean))],
-};
-
-function showAC(input, listId){
-  const q = input.value.trim().toLowerCase();
-  const list = document.getElementById(listId);
-  if(!q){list.style.display='none';return;}
-  const opts = acData[listId]().filter(v=>v.toLowerCase().includes(q));
-  if(!opts.length){list.style.display='none';return;}
-  list.innerHTML = opts.map(v=>{
-    const hi = v.replace(new RegExp('('+q+')','gi'),'<strong>$1</strong>');
-    return `<div class="ac-item" onmousedown="pickAC(event,'${input.id}','${listId}',\`${v}\`)">\</div>`;
-  }).join('');
-  list.style.display='block';
-}
-
-function pickAC(e, inputId, listId, val){
-  e.preventDefault();
-  document.getElementById(inputId).value = val;
-  document.getElementById(listId).style.display='none';
-}
-
-document.addEventListener('click', e=>{
-  ['ac-doll','ac-style'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el) el.style.display='none';
-  });
-});
 
 </script>
 </body>
