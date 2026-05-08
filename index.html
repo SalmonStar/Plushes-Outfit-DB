@@ -760,9 +760,6 @@ async function load() {
 
     items = (rows || []).map((row, i) => {
       let thumbCover = row.cover;
-      if (thumbCover && thumbCover.includes(SB_URL)) {
-        thumbCover = thumbCover.replace('/object/public/', '/render/image/public/') + '?width=600&quality=80';
-      }
       return {
         idx:       String(i + 1).padStart(3, '0'),
         id:        row.id,
@@ -1003,7 +1000,7 @@ function _doFilter() {
     <div class="card" onclick='openDetail(${JSON.stringify(item).replace(/'/g, "&#39;")})'>
       <div class="card-img" style="aspect-ratio:1">
         ${item.cover
-          ? `<img src="${item.cover}" alt="${item.name}" loading="lazy" decoding="async">`
+          ? `<img src="${item.cover}" alt="${item.name}" loading="lazy" decoding="async" width="220" height="220" style="width:100%;height:100%;">`
           : `<div class="card-no-img" style="aspect-ratio:1">○</div>`
         }
       </div>

@@ -14,7 +14,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // 1. 從 Notion 拉所有造型
     const notionRes = await fetch(
       `https://api.notion.com/v1/databases/${DATABASE_ID}/query`,
       {
@@ -32,10 +31,11 @@ Deno.serve(async (req) => {
     );
     const notionData = await notionRes.json();
 
-    // 2. 整理資料格式
     const outfits = (notionData.results || []).map((pg: any) => {
       const p = pg.properties;
       const cover = pg.cover?.external?.url || pg.cover?.file?.url || null;
+      // Notion S3 暫時連結不覆蓋 Supabase Storage 的圖片
+      const safeCover = cover && !cover.includes("amazonaws.com") ? cover : null;
       return {
         notion_id: pg.id,
         name: p["娃衣名稱"]?.title?.[0]?.text?.content || "Untitled",
@@ -46,11 +46,10 @@ Deno.serve(async (req) => {
         note: p["備註"]?.rich_text?.[0]?.text?.content || null,
         shop: p["商家連結或名稱"]?.rich_text?.[0]?.text?.content || null,
         origin: p["產地"]?.select?.name || null,
-        cover: cover,
+        cover: safeCover,
       };
     });
 
-    // 3. Upsert 進 Supabase DB（notion_id 相同就更新，不重複新增）
     const upsertRes = await fetch(
       `${SUPABASE_URL}/rest/v1/outfits`,
       {
