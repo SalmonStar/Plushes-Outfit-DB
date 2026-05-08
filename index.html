@@ -1219,13 +1219,13 @@ async function submitForm() {
     if (!res.ok) throw new Error(JSON.stringify(rd));
 
     // 非同步把新的 doll/style/tags 寫進清單 table（背景執行）
-    if (doll) {
+    doll.forEach(d => {
       fetch(`${SB_URL}/rest/v1/dolls`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Prefer': 'resolution=ignore-duplicates' },
-        body: JSON.stringify({ name: doll })
+        body: JSON.stringify({ name: d })
       }).catch(() => {});
-    }
+    });
     style.forEach(s => {
       fetch(`${SB_URL}/rest/v1/styles`, {
         method: 'POST',
@@ -1241,18 +1241,38 @@ async function submitForm() {
       }).catch(() => {});
     });
 
-    // 非同步備份到 Notion（背景執行，不等它）
-    fetch(EDGE, {
-      method:  'POST',
-      headers: hdrs,
-      body: JSON.stringify({
-        action: 'create',
-        data: { name, imageUrl, dolls: doll, style, size, tags, note, shop: shop.startsWith('http') ? shop : '', origin }
-      })
-    }).catch(() => {});
+    // 原本是 fire-and-forget，改為等待並取回 notion_id
+    try {
+      const notionRes = await fetch(EDGE, {
+        method:  'POST',
+        headers: hdrs,
+        body: JSON.stringify({
+          action: 'create',
+          data: { name, imageUrl, dolls: doll, style, size, tags, note, shop: shop.startsWith('http') ? shop : '', origin }
+        })
+      });
+      const notionJson = await notionRes.json();
+      const notionId = notionJson?.id;   // Notion 回傳的 page ID
+
+      // 用 notion_id 更新剛才寫入的那筆 Supabase 資料
+      if (notionId && rd[0]?.id) {
+        await fetch(`${DB}?id=eq.${rd[0].id}`, {
+          method:  'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SB_KEY,
+            'Authorization': `Bearer ${SB_KEY}`,
+          },
+          body: JSON.stringify({ notion_id: notionId })
+        });
+      }
+    } catch (_) {
+      // Notion 備份失敗不影響主流程
+    }
 
     setStatus('Done ✓', 'ok');
     setTimeout(() => { closeUpload(); resetForm(); load(); }, 1200);
+
   } catch (e) {
     setStatus('Error: ' + e.message, 'err');
   } finally {

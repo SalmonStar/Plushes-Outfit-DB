@@ -72,7 +72,7 @@ curl -X POST .../functions/v1/sync-notion
 | id | uuid | 主鍵 |
 | notion_id | text | Notion 頁面 ID（用於 upsert 防重複） |
 | name | text | 造型名稱（必填） |
-| doll | text | 試穿娃娃 |
+| doll | text[] | 試穿娃娃（陣列） |
 | style | text[] | 款式（陣列） |
 | size | numeric | 娃娃尺寸 cm |
 | tags | text[] | 標籤（陣列） |
@@ -160,7 +160,7 @@ const SB_KEY = "<your-anon-key>";
 | 欄位名稱 | 類型 | 說明 |
 |----------|------|------|
 | 娃衣名稱 | Title | 造型名稱（必填） |
-| 試穿娃娃 | Select | 使用的娃娃 |
+| 試穿娃娃 | Multi-select | 使用的娃娃 |
 | 款式 | Multi-select | 例：上衣、配件、套裝 |
 | 娃娃尺寸 | Number | 單位 cm |
 | 標籤 | Multi-select | 自由標籤 |
