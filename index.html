@@ -6,86 +6,146 @@
 <title>娃衣圖書館</title>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600&family=Noto+Sans+TC:wght@300;400;500&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#fafaf8;
-  --surface:#fff;
-  --text:#1a1a1a;
-  --muted:#999;
-  --light:#eee;
-  --border:#e8e8e4;
-  --accent:#1a1a1a;
-}
-html{font-size:14px}
-body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
 
-/* ── Header ── */
-header{
-  display:grid;grid-template-columns:1fr auto 1fr;
-  align-items:center;padding:0 40px;height:60px;
-  border-bottom:1px solid var(--border);background:var(--bg);
-  position:sticky;top:0;
-  z-index: 160; /* 🌟 只要改這裡！原本是 100，改成 160 來壓過黑底遮罩 */
-}
-.header-left{display:flex;align-items:center;gap:20px}
-.header-issue{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.12em}
-.header-logo{text-align:center}
-.logo-jp{font-family:'Shippori Mincho',serif;font-size:20px;letter-spacing:.15em;font-weight:500}
-.logo-en{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.18em;color:var(--muted);display:block;margin-top:2px}
-.header-right{display:flex;justify-content:flex-end;align-items:center;gap:16px}
-.nav-link{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;color:var(--muted);cursor:pointer;background:none;border:none;transition:color .15s}
-.nav-link:hover{color:var(--text)}
-.upload-btn{
-  font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.12em;
-  background:var(--accent);color:#fff;border:none;
-  padding:7px 14px;cursor:pointer;transition:opacity .15s;
-}
-.upload-btn:hover{opacity:.75}
+/* ══════════════════════════════════════════
+   全域重置與 CSS 變數
+══════════════════════════════════════════ */
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* ── Layout (改為單純區塊，讓主內容佔滿畫面) ── */
+:root {
+  --bg:      #fafaf8;
+  --surface: #fff;
+  --text:    #1a1a1a;
+  --muted:   #999;
+  --light:   #eee;
+  --border:  #e8e8e4;
+  --accent:  #1a1a1a;
+}
+
+html { font-size: 14px; }
+body {
+  font-family: 'Noto Sans TC', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+
+/* ══════════════════════════════════════════
+   Header（固定置頂導覽列）
+   三欄 grid：左(logo資訊) ／ 中(品牌名) ／ 右(操作按鈕)
+   z-index 160 確保能壓過側邊欄遮罩（z-index: 140）
+══════════════════════════════════════════ */
+header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 0 40px;
+  height: 60px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  position: sticky;
+  top: 0;
+  z-index: 160;
+}
+
+.header-left  { display: flex; align-items: center; gap: 20px; }
+.header-logo  { text-align: center; }
+.header-right { display: flex; justify-content: flex-end; align-items: center; gap: 16px; }
+
+/* 期號文字（VOL.01）與英文副標 */
+.header-issue { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: .12em; }
+.logo-jp      { font-family: 'Shippori Mincho', serif; font-size: 20px; letter-spacing: .15em; font-weight: 500; }
+.logo-en      { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: .18em; color: var(--muted); display: block; margin-top: 2px; }
+
+/* 導覽文字按鈕（INDEX / FILTER）*/
+.nav-link {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .1em;
+  color: var(--muted);
+  cursor: pointer;
+  background: none;
+  border: none;
+  transition: color .15s;
+}
+.nav-link:hover { color: var(--text); }
+
+/* 新增造型按鈕（右上角黑底） */
+.upload-btn {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .12em;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 7px 14px;
+  cursor: pointer;
+  transition: opacity .15s;
+}
+.upload-btn:hover { opacity: .75; }
+
+
+/* ══════════════════════════════════════════
+   主佈局容器
+   側邊欄改為浮動抽屜，主內容佔滿畫面寬度
+══════════════════════════════════════════ */
 .layout {
   display: block;
   min-height: calc(100vh - 60px);
 }
 
-/* ── 懸浮遮罩 (電腦與手機通用) ── */
+
+/* ══════════════════════════════════════════
+   側邊欄遮罩（點擊關閉側邊欄）
+══════════════════════════════════════════ */
 .sidebar-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 140;
-  opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 140;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
 }
-/* 開啟時顯示遮罩 */
 .sidebar-overlay.open {
-  opacity: 1; pointer-events: auto;
+  opacity: 1;
+  pointer-events: auto;
 }
 
-/* ── Sidebar (全面改為抽屜式浮動面板) ── */
+
+/* ══════════════════════════════════════════
+   側邊欄（抽屜式浮動面板）
+   預設隱藏在畫面左側外，開啟時滑入
+══════════════════════════════════════════ */
 .sidebar {
   position: fixed;
-  top: 60px; /* 電腦版從 Header 下方開始 */
+  top: 60px; /* 從 Header 正下方開始 */
   left: 0;
   width: 260px;
   height: calc(100vh - 60px);
   background: var(--surface);
   z-index: 150;
-  box-shadow: 4px 0 12px rgba(0,0,0,0.15);
+  box-shadow: 4px 0 12px rgba(0, 0, 0, 0.15);
   transform: translateX(-100%); /* 預設收合在畫面左側外 */
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  padding: 32px 24px 80px; /* 底部留大空間，確保不會擋住 Clear All 按鈕 */
+  padding: 32px 24px 80px; /* 底部大留白，避免遮住 Clear All 按鈕 */
   overflow-y: auto;
   overflow-x: hidden;
 }
-
-/* 開啟時側邊欄滑入 */
 .sidebar.open {
-  transform: translateX(0);
+  transform: translateX(0); /* 滑入畫面 */
 }
 
-/* 預設隱藏手機版 Filter 按鈕 */
-.btn-filter-mobile {
-  display: none;
-}
+/* 手機版 Filter 按鈕（桌機版預設隱藏，由 media query 開啟）*/
+.btn-filter-mobile { display: none; }
 
-/* ── Sidebar 搜尋框與更多按鈕 ── */
+
+/* ══════════════════════════════════════════
+   側邊欄內部元件
+══════════════════════════════════════════ */
+
+/* 篩選關鍵字搜尋框 */
 .filter-search {
   width: 100%;
   border: none;
@@ -98,248 +158,378 @@ header{
   outline: none;
   margin-bottom: 8px;
 }
+.filter-search:focus { border-bottom-color: var(--accent); }
 
-.filter-search:focus {
-  border-bottom-color: var(--accent);
-}
-
+/* 「顯示更多」展開按鈕 */
 .show-more-btn {
   background: none;
   border: none;
   font-size: 10px;
   color: var(--muted);
   cursor: pointer;
-  padding: 4px 4px;
+  padding: 4px;
   font-family: 'DM Mono', monospace;
   letter-spacing: .06em;
   margin-top: 2px;
-  text-align: left; /* 讓文字靠左對齊比較好看 */
+  text-align: left;
 }
+.show-more-btn:hover { color: var(--text); }
 
-.show-more-btn:hover {
+/* 篩選區塊、標籤與列表 */
+.sidebar-block { margin-bottom: 32px; }
+.sidebar-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .15em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: block;
+}
+.filter-list { display: flex; flex-direction: column; gap: 1px; }
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 4px;
+  cursor: pointer;
+  transition: background .1s;
+  border-radius: 1px;
+}
+.filter-row:hover { background: var(--border); }
+.filter-row input[type=checkbox] { width: 11px; height: 11px; accent-color: var(--accent); flex-shrink: 0; cursor: pointer; }
+.filter-row .flabel { font-size: 12px; color: var(--text); flex: 1; cursor: pointer; }
+.filter-row .cnt { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); }
+
+/* 尺寸範圍輸入（min — max）*/
+.size-row { display: flex; align-items: center; gap: 6px; }
+.size-in {
+  width: 52px;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  padding: 4px 0;
+  font-size: 12px;
+  font-family: 'Noto Sans TC', sans-serif;
+  background: transparent;
   color: var(--text);
+  outline: none;
 }
+.size-in:focus { border-bottom-color: var(--accent); }
+.size-sep { font-size: 10px; color: var(--muted); }
 
-.sidebar-block{margin-bottom:32px}
-.sidebar-label{
-  font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.15em;
-  color:var(--muted);text-transform:uppercase;margin-bottom:12px;display:block;
+/* 清除所有篩選按鈕 */
+.clear-all {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .1em;
+  color: var(--muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  margin-top: 8px;
+  display: block;
 }
-.filter-list{display:flex;flex-direction:column;gap:1px}
-.filter-row{display:flex;align-items:center;gap:8px;padding:5px 4px;cursor:pointer;transition:background .1s;border-radius:1px}
-.filter-row:hover{background:var(--border)}
-.filter-row input[type=checkbox]{width:11px;height:11px;accent-color:var(--accent);flex-shrink:0;cursor:pointer}
-.filter-row .flabel{font-size:12px;color:var(--text);flex:1;cursor:pointer}
-.filter-row .cnt{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)}
-.size-row{display:flex;align-items:center;gap:6px}
-.size-in{width:52px;border:none;border-bottom:1px solid var(--border);padding:4px 0;font-size:12px;font-family:'Noto Sans TC',sans-serif;background:transparent;color:var(--text);outline:none}
-.size-in:focus{border-bottom-color:var(--accent)}
-.size-sep{font-size:10px;color:var(--muted)}
-.clear-all{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--muted);background:none;border:none;cursor:pointer;text-decoration:underline;margin-top:8px;display:block}
-.clear-all:hover{color:var(--text)}
+.clear-all:hover { color: var(--text); }
 
-/* ── Main ── */
+
+/* ══════════════════════════════════════════
+   主內容區域
+══════════════════════════════════════════ */
+
+/* 內容外框：左右留白對齊 Header，大螢幕限制最大寬度 */
 .main-wrap {
   width: 100%;
-  /* 重點：加上左右 40px 的留白對齊 Header，底部留白 80px 讓滑動見底時比較舒服 */
-  padding: 0 40px 80px; 
-  
-  /* (可選) 如果你不希望在大螢幕 (如 iMac) 上圖片無限往兩側延伸，可以加上這兩行限制最大寬度並置中： */
-  max-width: 1600px; 
+  padding: 0 40px 80px;
+  max-width: 1600px;
   margin: 0 auto;
 }
 
+/* 頂部搜尋列與結果數量 */
 .top-bar {
-  display: flex; align-items: center; justify-content: space-between;
-  /* 因為外層 main-wrap 已經有左右留白了，這裡的 padding 左右改為 0，讓底線精準對齊圖片邊緣 */
-  padding: 20px 0 16px; 
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 0 16px;
   border-bottom: 1px solid var(--border);
 }
-
 .search-box {
-  border: none; border-bottom: 1px solid var(--border);
-  padding: 6px 0; font-size: 13px; font-family: 'Noto Sans TC',sans-serif;
-  background: transparent; color: var(--text); outline: none; width: 240px;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  padding: 6px 0;
+  font-size: 13px;
+  font-family: 'Noto Sans TC', sans-serif;
+  background: transparent;
+  color: var(--text);
+  outline: none;
+  width: 240px;
 }
-.search-box:focus { border-bottom-color: var(--accent); }
+.search-box:focus        { border-bottom-color: var(--accent); }
 .search-box::placeholder { color: var(--muted); }
-.result-count { font-family: 'DM Mono',monospace; font-size: 10px; color: var(--muted); letter-spacing: .08em; }
+.result-count { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: .08em; }
 
-/* ── Gallery ── */
+
+/* ══════════════════════════════════════════
+   圖片畫廊（響應式 Grid）
+══════════════════════════════════════════ */
 .gallery {
   display: grid;
-  /* 因為側邊欄改為浮動，畫面空間變大了，我們直接讓圖片預設基礎大小變大（例如 320px） */
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 0;
-  padding: 0;
 }
 
-/* Masonry-ish: alternate card heights */
+/* 單一卡片
+   - content-visibility: auto 讓瀏覽器跳過畫面外卡片的渲染，提升捲動效能
+   - contain-intrinsic-size 提供佔位空間，避免捲動條跳動 */
 .card {
   background: var(--surface);
   cursor: pointer;
   overflow: hidden;
-  border-right: 1px solid var(--border);
+  border-right:  1px solid var(--border);
   border-bottom: 1px solid var(--border);
   transition: background .15s;
   position: relative;
-  
-  /* ===== CSS 渲染效能優化 ===== */
-  content-visibility: auto; 
-  /* 配合上方 320px 的設定，微調預設佔用空間，讓捲動更滑順 */
-  contain-intrinsic-size: 320px 380px; 
+  content-visibility: auto;
+  contain-intrinsic-size: 320px 380px;
+}
+.card:hover                  { background: #f5f5f2; }
+.card:hover .card-img img    { transform: scale(1.05); }
+
+/* 卡片圖片區
+   - aspect-ratio 鎖定固定比例，讓每張卡片高度一致
+   - object-fit: cover + object-position: center：置中裁切，左右均勻裁，上下不裁 */
+.card-img                        { width: 100%; overflow: hidden; background: var(--light); }
+.card-img img                    { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; transition: transform .4s ease; }
+.card:nth-child(3n+1) .card-img  { aspect-ratio: 1;    }
+.card:nth-child(3n+2) .card-img  { aspect-ratio: .85;  }
+.card:nth-child(3n)   .card-img  { aspect-ratio: 1.1;  }
+
+/* 無封面圖片時的佔位區塊 */
+.card-no-img { display: flex; align-items: center; justify-content: center; background: var(--light); color: var(--border); font-size: 32px; }
+
+/* 卡片文字資訊 */
+.card-body  { padding: 14px 16px 16px; }
+.card-num   { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted); letter-spacing: .1em; margin-bottom: 6px; }
+.card-title { font-family: 'Shippori Mincho', serif; font-size: 14px; font-weight: 500; line-height: 1.4; margin-bottom: 6px; letter-spacing: .03em; }
+.card-meta  { font-size: 11px; color: var(--muted); margin-bottom: 8px; letter-spacing: .02em; }
+
+/* 標籤列 */
+.tag-list { display: flex; flex-wrap: wrap; gap: 4px; }
+.tag      { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: .08em; border: 1px solid var(--border); padding: 2px 6px; color: var(--muted); }
+
+/* 無結果提示 */
+.empty { grid-column: 1 / -1; text-align: center; padding: 80px; color: var(--muted); font-size: 13px; }
+
+
+/* ══════════════════════════════════════════
+   骨架屏（資料載入中的佔位動畫）
+══════════════════════════════════════════ */
+.skel .card-img  { aspect-ratio: 1; animation: sk 1.4s ease infinite; }
+.skel .skel-line { height: 10px; border-radius: 0; margin-bottom: 8px; animation: sk 1.4s ease infinite; }
+.skel .skel-line.s { width: 50%; }
+@keyframes sk {
+  0%, 100% { background: #eee; }
+  50%       { background: #e4e4e0; }
 }
 
-.card:hover{background:#f5f5f2}
-.card:hover .card-img img{transform:scale(1.05)}
-.card-img{width:100%;overflow:hidden;background:var(--light)}
-.card-img img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .4s ease}
-.card-no-img{display:flex;align-items:center;justify-content:center;background:var(--light);color:var(--border);font-size:32px}
-.card-body{padding:14px 16px 16px}
-.card-num{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:.1em;margin-bottom:6px}
-.card-title{font-family:'Shippori Mincho',serif;font-size:14px;font-weight:500;line-height:1.4;margin-bottom:6px;letter-spacing:.03em}
-.card-meta{font-size:11px;color:var(--muted);margin-bottom:8px;letter-spacing:.02em}
-.tag-list{display:flex;flex-wrap:wrap;gap:4px}
-.tag{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.08em;border:1px solid var(--border);padding:2px 6px;color:var(--muted)}
 
-/* alternate heights for visual rhythm */
-.card:nth-child(3n+1) .card-img{aspect-ratio:1}
-.card:nth-child(3n+2) .card-img{aspect-ratio:.85}
-.card:nth-child(3n) .card-img{aspect-ratio:1.1}
-
-.empty{grid-column:1/-1;text-align:center;padding:80px;color:var(--muted);font-size:13px}
-
-/* skeleton */
-.skel .card-img{aspect-ratio:1;animation:sk 1.4s ease infinite}
-.skel .skel-line{height:10px;border-radius:0;margin-bottom:8px;animation:sk 1.4s ease infinite}
-.skel .skel-line.s{width:50%}
-@keyframes sk{0%,100%{background:#eee}50%{background:#e4e4e0}}
-
-/* ── Modals ── */
-.modal-bg{display:none;position:fixed;inset:0;background:rgba(26,26,26,.65);z-index:200;align-items:center;justify-content:center;padding:20px}
-.modal-bg.open{display:flex}
-.modal{
-  background:var(--surface);width:100%;max-width:480px;
-  max-height:92vh;overflow-y:auto;padding:36px 32px;position:relative;
+/* ══════════════════════════════════════════
+   Modal（通用彈出視窗）
+══════════════════════════════════════════ */
+.modal-bg { display: none; position: fixed; inset: 0; background: rgba(26, 26, 26, .65); z-index: 200; align-items: center; justify-content: center; padding: 20px; }
+.modal-bg.open { display: flex; }
+.modal {
+  background: var(--surface);
+  width: 100%;
+  max-width: 480px;
+  max-height: 92vh;
+  overflow-y: auto;
+  padding: 36px 32px;
+  position: relative;
 }
-.modal-x{position:absolute;top:20px;right:20px;background:none;border:none;font-size:18px;color:var(--muted);cursor:pointer;font-family:'DM Mono',monospace;line-height:1}
-.modal-x:hover{color:var(--text)}
-.modal-title{font-family:'Shippori Mincho',serif;font-size:18px;font-weight:500;letter-spacing:.05em;margin-bottom:28px}
-.fg{margin-bottom:16px}
-.fg label{display:block;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.15em;color:var(--muted);text-transform:uppercase;margin-bottom:6px}
-.fg input,.fg select,.fg textarea{
-  width:100%;border:none;border-bottom:1px solid var(--border);
-  padding:6px 0;font-size:13px;font-family:'Noto Sans TC',sans-serif;
-  background:transparent;color:var(--text);outline:none;border-radius:0;-webkit-appearance:none;
-}
-.fg input:focus,.fg select:focus,.fg textarea:focus{border-bottom-color:var(--accent)}
-.fg textarea{resize:vertical;min-height:72px;border:1px solid var(--border);padding:8px;margin-top:2px}
-.fg textarea:focus{border-color:var(--accent)}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.upload-zone{
-  border:1px solid var(--border);padding:28px 20px;text-align:center;cursor:pointer;
-  transition:border-color .2s,background .2s;margin-top:2px;
-}
-.upload-zone:hover,.upload-zone.over{border-color:var(--accent);background:#f8f8f5}
-.upload-zone p{font-size:12px;color:var(--muted)}
-.upload-zone .hint{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.08em;margin-top:4px}
-.upload-prev{width:100%;max-height:180px;object-fit:cover;margin-top:10px;display:none}
-.submit-btn{
-  width:100%;background:var(--accent);color:#fff;border:none;
-  padding:12px;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.12em;
-  cursor:pointer;margin-top:12px;transition:opacity .15s;
-}
-.submit-btn:hover{opacity:.75}
-.submit-btn:disabled{opacity:.35;cursor:not-allowed}
-.status-msg{text-align:center;font-size:11px;margin-top:10px;min-height:16px;font-family:'DM Mono',monospace;letter-spacing:.04em}
-.status-msg.ok{color:#3a7a56}
-.status-msg.err{color:#b03030}
+.modal-x { position: absolute; top: 20px; right: 20px; background: none; border: none; font-size: 18px; color: var(--muted); cursor: pointer; font-family: 'DM Mono', monospace; line-height: 1; }
+.modal-x:hover { color: var(--text); }
+.modal-title { font-family: 'Shippori Mincho', serif; font-size: 18px; font-weight: 500; letter-spacing: .05em; margin-bottom: 28px; }
 
-/* detail */
-.detail-img{width:100%;max-height:360px;object-fit:cover;display:block;margin-bottom:24px}
-.detail-title{font-family:'Shippori Mincho',serif;font-size:20px;font-weight:500;letter-spacing:.05em;margin-bottom:20px;line-height:1.4}
-.detail-rows{display:flex;flex-direction:column;gap:10px}
-.dr{display:flex;gap:16px;font-size:13px}
-.dk{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;min-width:64px;padding-top:2px;flex-shrink:0}
+/* 表單欄位群組 */
+.fg { margin-bottom: 16px; }
+.fg label { display: block; font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: .15em; color: var(--muted); text-transform: uppercase; margin-bottom: 6px; }
+.fg input, .fg select, .fg textarea {
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  padding: 6px 0;
+  font-size: 13px;
+  font-family: 'Noto Sans TC', sans-serif;
+  background: transparent;
+  color: var(--text);
+  outline: none;
+  border-radius: 0;
+  -webkit-appearance: none;
+}
+.fg input:focus, .fg select:focus, .fg textarea:focus { border-bottom-color: var(--accent); }
+.fg textarea { resize: vertical; min-height: 72px; border: 1px solid var(--border); padding: 8px; margin-top: 2px; }
+.fg textarea:focus { border-color: var(--accent); }
 
-@media(max-width:640px){
+/* 雙欄佈局（用於並排的輸入欄）*/
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+/* 圖片上傳區 */
+.upload-zone {
+  border: 1px solid var(--border);
+  padding: 28px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .2s, background .2s;
+  margin-top: 2px;
+}
+.upload-zone:hover, .upload-zone.over { border-color: var(--accent); background: #f8f8f5; }
+.upload-zone p    { font-size: 12px; color: var(--muted); }
+.upload-zone .hint{ font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: .08em; margin-top: 4px; }
+.upload-prev      { width: 100%; max-height: 180px; object-fit: cover; margin-top: 10px; display: none; }
+
+/* 送出按鈕與狀態訊息 */
+.submit-btn {
+  width: 100%;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 12px;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: .12em;
+  cursor: pointer;
+  margin-top: 12px;
+  transition: opacity .15s;
+}
+.submit-btn:hover           { opacity: .75; }
+.submit-btn:disabled        { opacity: .35; cursor: not-allowed; }
+.status-msg                 { text-align: center; font-size: 11px; margin-top: 10px; min-height: 16px; font-family: 'DM Mono', monospace; letter-spacing: .04em; }
+.status-msg.ok              { color: #3a7a56; }
+.status-msg.err             { color: #b03030; }
+
+
+/* ══════════════════════════════════════════
+   Detail Modal（造型詳細資訊）
+══════════════════════════════════════════ */
+/* Detail Modal 圖片：固定高度＋完整顯示，不裁切任何部分，空白補背景色 */
+.detail-img   { width: 100%; height: 400px; object-fit: contain; background: var(--light); display: block; margin-bottom: 24px; }
+.detail-title { font-family: 'Shippori Mincho', serif; font-size: 20px; font-weight: 500; letter-spacing: .05em; margin-bottom: 20px; line-height: 1.4; }
+.detail-rows  { display: flex; flex-direction: column; gap: 10px; }
+.dr { display: flex; gap: 16px; font-size: 13px; }
+.dk { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: .12em; color: var(--muted); text-transform: uppercase; min-width: 64px; padding-top: 2px; flex-shrink: 0; }
+
+
+/* ══════════════════════════════════════════
+   手機版響應式（≤640px）
+══════════════════════════════════════════ */
+@media (max-width: 640px) {
   header { padding: 0 20px; }
+
+  /* 隱藏桌機版不需要的元素 */
   .header-issue, .logo-en { display: none; }
-  
-  /* 按鈕顯示切換：隱藏 Index 和電腦版 Filter，顯示手機版 Filter */
-  .btn-index { display: none; }
-  .btn-filter-desktop { display: none; }
+  .btn-index              { display: none; }
+  .btn-filter-desktop     { display: none; }
+
+  /* 顯示手機版 Filter 按鈕 */
   .btn-filter-mobile { display: block; }
 
-  /* 手機版 Sidebar：從螢幕最頂端開始，覆蓋 Header，並解決 iOS 底部遮擋問題 */
+  /* 手機版 Sidebar：覆蓋整個螢幕（含 Header），解決 iOS Safari 底部欄遮擋問題 */
   .sidebar {
     top: 0;
-    width: 260px; /* 寬度與電腦版統一，讓視覺更一致 */
+    width: 260px;
     height: 100vh;
-    height: 100dvh; /* 解決 Safari 底部導航列遮擋的關鍵 */
-    padding: 48px 24px 80px; 
-    z-index: 200; /* 確保層級比 Header 的 100 高 */
+    height: 100dvh; /* 100dvh 排除 Safari 底部導航列的遮擋 */
+    padding: 48px 24px 80px;
+    z-index: 200; /* 需高於 Header（z-index: 160） */
   }
 
-  /* 確保遮罩層級也比 Header 高，完美蓋住整個背景畫面 */
-  .sidebar-overlay {
-    z-index: 190;
-  }
+  /* 遮罩也需高於 Header */
+  .sidebar-overlay { z-index: 190; }
 
-  /* Main 區域微調 */
-  .main-wrap { padding: 0; }
-  .top-bar { padding: 14px 16px; }
+  /* 主內容區縮小留白 */
+  .main-wrap  { padding: 0; }
+  .top-bar    { padding: 14px 16px; }
   .search-box { width: 160px; }
-  
-  /* 畫廊強制雙排顯示，且圖片比例固定為正方形 */
-  .gallery { grid-template-columns: repeat(2, 1fr); }
+
+  /* 畫廊改為固定雙排，圖片統一正方形比例，從頂部對齊 */
+  .gallery                     { grid-template-columns: repeat(2, 1fr); }
   .card:nth-child(n) .card-img { aspect-ratio: 1; }
 }
 
-.ac-list{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--border);z-index:50;max-height:200px;overflow-y:auto;display:none;box-shadow:0 4px 12px rgba(0,0,0,.08)}
-.ac-item{padding:9px 12px;font-size:12px;cursor:pointer;border-bottom:1px solid var(--border);color:var(--text)}
-.ac-item:last-child{border-bottom:none}
-.ac-item:hover,.ac-item.focused{background:var(--bg)}
-.ac-item b{font-weight:600}
 
-.filter-search{width:100%;border:none;border-bottom:1px solid var(--border);padding:4px 0;font-size:11px;font-family:'Noto Sans TC',sans-serif;background:transparent;color:var(--text);outline:none;margin-bottom:8px}
-.filter-search:focus{border-bottom-color:var(--accent)}
-.show-more-btn{background:none;border:none;font-size:10px;color:var(--muted);cursor:pointer;padding:4px 4px;font-family:'DM Mono',monospace;letter-spacing:.06em;margin-top:2px}
-.show-more-btn:hover{color:var(--text)}
+/* ══════════════════════════════════════════
+   Autocomplete 下拉選單
+══════════════════════════════════════════ */
+.ac-list {
+  position: absolute;
+  top: 100%; left: 0; right: 0;
+  background: #fff;
+  border: 1px solid var(--border);
+  z-index: 50;
+  max-height: 200px;
+  overflow-y: auto;
+  display: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .08);
+}
+.ac-item { padding: 9px 12px; font-size: 12px; cursor: pointer; border-bottom: 1px solid var(--border); color: var(--text); }
+.ac-item:last-child              { border-bottom: none; }
+.ac-item:hover, .ac-item.focused { background: var(--bg); }
+.ac-item b                       { font-weight: 600; }
+
 </style>
 </head>
 <body>
 
+<!-- ══════════════════════════════════════════
+     Header
+══════════════════════════════════════════ -->
 <header>
   <div class="header-left">
     <span class="header-issue">VOL.01</span>
-    <button class="nav-link btn-index" onclick="clearFilters()">INDEX</button>
+    <!-- 桌機：回到首頁（清除篩選）；手機：開啟 Filter 抽屜 -->
+    <button class="nav-link btn-index"         onclick="clearFilters()">INDEX</button>
     <button class="nav-link btn-filter-mobile" onclick="toggleSidebar()">FILTER</button>
   </div>
+
   <div class="header-logo">
     <span class="logo-jp">娃衣圖書館</span>
     <span class="logo-en">PLUSHES OUTFIT ARCHIVE</span>
   </div>
+
   <div class="header-right">
     <button class="nav-link btn-filter-desktop" id="filterToggle" onclick="toggleSidebar()">FILTER</button>
     <button class="upload-btn" onclick="openUpload()">SUBMIT</button>
   </div>
 </header>
 
+
+<!-- ══════════════════════════════════════════
+     主佈局
+══════════════════════════════════════════ -->
 <div class="layout">
+
+  <!-- 點擊遮罩可關閉側邊欄 -->
   <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
-  
+
+  <!-- 篩選側邊欄 -->
   <aside class="sidebar" id="sidebar">
+
+    <!-- 款式篩選 -->
     <div class="sidebar-block">
       <span class="sidebar-label">款式</span>
-      <input class="filter-search" type="text" id="fs-style" placeholder="搜尋..." oninput="filterSearch('fl-style',this.value)">
+      <input class="filter-search" type="text" id="fs-style" placeholder="搜尋..." oninput="filterSearch('fl-style', this.value)">
       <div class="filter-list" id="fl-style"></div>
     </div>
+
+    <!-- 娃娃篩選 -->
     <div class="sidebar-block">
       <span class="sidebar-label">試穿娃娃</span>
-      <input class="filter-search" type="text" id="fs-doll" placeholder="搜尋..." oninput="filterSearch('fl-doll',this.value)">
+      <input class="filter-search" type="text" id="fs-doll" placeholder="搜尋..." oninput="filterSearch('fl-doll', this.value)">
       <div class="filter-list" id="fl-doll"></div>
     </div>
+
+    <!-- 尺寸範圍篩選 -->
     <div class="sidebar-block">
       <span class="sidebar-label">尺寸 cm</span>
       <div class="size-row">
@@ -348,41 +538,63 @@ header{
         <input class="size-in" type="number" id="sz-max" placeholder="max" oninput="applyFilters()">
       </div>
     </div>
+
+    <!-- 標籤篩選 -->
     <div class="sidebar-block">
       <span class="sidebar-label">標籤</span>
-      <input class="filter-search" type="text" id="fs-tags" placeholder="搜尋..." oninput="filterSearch('fl-tags',this.value)">
+      <input class="filter-search" type="text" id="fs-tags" placeholder="搜尋..." oninput="filterSearch('fl-tags', this.value)">
       <div class="filter-list" id="fl-tags"></div>
     </div>
+
     <button class="clear-all" onclick="clearFilters()">CLEAR ALL</button>
   </aside>
 
+
+  <!-- 主內容：搜尋列 + 圖片畫廊 -->
   <div class="main-wrap">
     <div class="top-bar">
       <input class="search-box" type="text" id="searchQ" placeholder="Search..." oninput="applyFilters()">
       <span class="result-count" id="rcount">—</span>
     </div>
+
+    <!-- 畫廊：載入前顯示骨架屏 -->
     <div class="gallery" id="gallery">
-      ${Array(8).fill(0).map(()=>`<div class="card skel"><div class="card-img"></div><div class="card-body"><div class="skel-line" style="background:#eee;height:10px;margin-bottom:8px"></div><div class="skel-line s" style="background:#eee;height:10px;width:50%"></div></div></div>`).join('')}
+      ${Array(8).fill(0).map(() => `
+        <div class="card skel">
+          <div class="card-img"></div>
+          <div class="card-body">
+            <div class="skel-line"   style="background:#eee;height:10px;margin-bottom:8px"></div>
+            <div class="skel-line s" style="background:#eee;height:10px;width:50%"></div>
+          </div>
+        </div>
+      `).join('')}
     </div>
   </div>
-</div>
 
-<!-- Upload modal -->
+</div><!-- /.layout -->
+
+
+<!-- ══════════════════════════════════════════
+     Modal：新增造型（Upload）
+══════════════════════════════════════════ -->
 <div class="modal-bg" id="upModal">
   <div class="modal">
     <button class="modal-x" onclick="closeUpload()">×</button>
     <div class="modal-title">Submit Outfit</div>
 
+    <!-- 造型名稱（必填）+ Autocomplete -->
     <div class="fg" style="position:relative">
       <label>造型名稱 *</label>
       <input type="text" id="f-name" placeholder="例：台大米白帽T" autocomplete="off" oninput="showAC(this,'ac-name')">
       <div id="ac-name" class="ac-list"></div>
     </div>
+
+    <!-- 照片上傳區（支援點擊 & 拖曳）-->
     <div class="fg">
       <label>照片 *</label>
       <div class="upload-zone" id="upZone"
         onclick="document.getElementById('fInput').click()"
-        ondragover="event.preventDefault();this.classList.add('over')"
+        ondragover="event.preventDefault(); this.classList.add('over')"
         ondragleave="this.classList.remove('over')"
         ondrop="handleDrop(event)">
         <p id="upText">點擊或拖曳上傳</p>
@@ -391,28 +603,67 @@ header{
       </div>
       <input type="file" id="fInput" accept="image/*" style="display:none" onchange="handleFile(this.files[0])">
     </div>
+
+    <!-- 娃娃 & 款式（並排雙欄）-->
     <div class="two">
-      <div class="fg" style="position:relative"><label>試穿娃娃</label><input type="text" id="f-doll" placeholder="例：SUNSUN玩偶" autocomplete="off" oninput="showAC(this,'ac-doll')"><div id="ac-doll" class="ac-list"></div></div>
-      <div class="fg" style="position:relative"><label>款式（逗號分隔）</label><input type="text" id="f-style" placeholder="例：上衣, 配件" autocomplete="off" oninput="showAC(this,'ac-style')"><div id="ac-style" class="ac-list"></div></div>
+      <div class="fg" style="position:relative">
+        <label>試穿娃娃</label>
+        <input type="text" id="f-doll" placeholder="例：SUNSUN玩偶" autocomplete="off" oninput="showAC(this,'ac-doll')">
+        <div id="ac-doll" class="ac-list"></div>
+      </div>
+      <div class="fg" style="position:relative">
+        <label>款式（逗號分隔）</label>
+        <input type="text" id="f-style" placeholder="例：上衣, 配件" autocomplete="off" oninput="showAC(this,'ac-style')">
+        <div id="ac-style" class="ac-list"></div>
+      </div>
     </div>
+
+    <!-- 尺寸 & 產地（並排雙欄）-->
     <div class="two">
-      <div class="fg"><label>娃娃尺寸 cm</label><input type="number" id="f-size" placeholder="28"></div>
-      <div class="fg"><label>產地</label>
+      <div class="fg">
+        <label>娃娃尺寸 cm</label>
+        <input type="number" id="f-size" placeholder="28">
+      </div>
+      <div class="fg">
+        <label>產地</label>
         <select id="f-origin">
           <option value="">—</option>
-          <option>台灣</option><option>日本</option><option>韓國</option><option>中國</option><option>不確定</option>
+          <option>台灣</option>
+          <option>日本</option>
+          <option>韓國</option>
+          <option>中國</option>
+          <option>不確定</option>
         </select>
       </div>
     </div>
-    <div class="fg" style="position:relative"><label>標籤（逗號分隔）</label><input type="text" id="f-tags" placeholder="休閒, 日系, 可愛" autocomplete="off" oninput="showAC(this,'ac-tags')"><div id="ac-tags" class="ac-list"></div></div>
-    <div class="fg"><label>商家連結</label><input type="text" id="f-shop" placeholder="https://..."></div>
-    <div class="fg"><label>備註</label><textarea id="f-note" placeholder="尺寸建議、穿搭心得..."></textarea></div>
+
+    <!-- 標籤（逗號分隔）+ Autocomplete -->
+    <div class="fg" style="position:relative">
+      <label>標籤（逗號分隔）</label>
+      <input type="text" id="f-tags" placeholder="休閒, 日系, 可愛" autocomplete="off" oninput="showAC(this,'ac-tags')">
+      <div id="ac-tags" class="ac-list"></div>
+    </div>
+
+    <div class="fg">
+      <label>商家連結</label>
+      <input type="text" id="f-shop" placeholder="https://...">
+    </div>
+
+    <div class="fg">
+      <label>備註</label>
+      <textarea id="f-note" placeholder="尺寸建議、穿搭心得..."></textarea>
+    </div>
+
     <button class="submit-btn" id="subBtn" onclick="submitForm()">UPLOAD</button>
     <div class="status-msg" id="statusMsg"></div>
   </div>
 </div>
 
-<!-- Detail modal -->
+
+<!-- ══════════════════════════════════════════
+     Modal：造型詳細資訊（Detail）
+     內容由 openDetail() 動態填入
+══════════════════════════════════════════ -->
 <div class="modal-bg" id="detModal">
   <div class="modal" style="max-width:540px">
     <button class="modal-x" onclick="document.getElementById('detModal').classList.remove('open')">×</button>
@@ -420,121 +671,158 @@ header{
   </div>
 </div>
 
+
 <script>
-const SB_URL="https://jakxuqbfplyohjshqnlp.supabase.co";
-const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impha3h1cWJmcGx5b2hqc2hxbmxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNDUxOTksImV4cCI6MjA5MzcyMTE5OX0.PtSj2MKFARo88C0Hp4HTRDobanaI2xPSG3goPmNkCLM";
-const EDGE=`${SB_URL}/functions/v1/notion-proxy`;
-const BUCKET=`${SB_URL}/storage/v1/object/public/outfit-photos`;
+/* ══════════════════════════════════════════
+   後端設定（Supabase + Notion Edge Function）
+══════════════════════════════════════════ */
+const SB_URL = "https://jakxuqbfplyohjshqnlp.supabase.co";
+const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impha3h1cWJmcGx5b2hqc2hxbmxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNDUxOTksImV4cCI6MjA5MzcyMTE5OX0.PtSj2MKFARo88C0Hp4HTRDobanaI2xPSG3goPmNkCLM";
+const EDGE   = `${SB_URL}/functions/v1/notion-proxy`;   // Notion CRUD 的 Edge Function
+const BUCKET = `${SB_URL}/storage/v1/object/public/outfit-photos`; // Storage 公開圖片根路徑
 
-let items=[],selFile=null;
-let aStyles=new Set(),aDolls=new Set(),aTags=new Set();
+/* ══════════════════════════════════════════
+   全域狀態
+══════════════════════════════════════════ */
+let items   = [];          // 從 Notion 載入的所有造型資料
+let selFile = null;        // 使用者選取待上傳的圖片檔案
 
-const hdrs={'Content-Type':'application/json','Authorization':`Bearer ${SB_KEY}`};
+// 目前啟用的篩選條件（Set 結構，方便新增／刪除）
+let aStyles = new Set();
+let aDolls  = new Set();
+let aTags   = new Set();
 
-async function load(){
-  try{
-    const r=await fetch(EDGE,{method:'POST',headers:hdrs,body:JSON.stringify({action:'list'})});
-    const d=await r.json();
-    items=(d.results||[]).map((pg,i)=>{
-      const p=pg.properties;
-      
-      // ===== 方案二：動態壓縮圖片 URL =====
-      let rawCover = pg.cover?.external?.url || pg.cover?.file?.url || null;
-      // 確保是 Supabase 的圖片才做替換，避免破壞其他外部圖床連結
-      if (rawCover && rawCover.includes(SB_URL)) {
-        // 將 /object/public/ 替換為 /render/image/public/，並加上縮圖參數 (寬度400px，品質80)
-        rawCover = rawCover.replace('/object/public/', '/render/image/public/') + '?width=400&quality=80';
+// 共用 API 請求標頭
+const hdrs = {
+  'Content-Type': 'application/json',
+  'Authorization': `Bearer ${SB_KEY}`
+};
+
+
+/* ══════════════════════════════════════════
+   資料載入：從 Notion 取得所有造型
+══════════════════════════════════════════ */
+async function load() {
+  try {
+    const r = await fetch(EDGE, { method: 'POST', headers: hdrs, body: JSON.stringify({ action: 'list' }) });
+    const d = await r.json();
+
+    items = (d.results || []).map((pg, i) => {
+      const p = pg.properties;
+
+      // 原始圖片 URL（用於 Modal 完整顯示）
+      const originalCover = pg.cover?.external?.url || pg.cover?.file?.url || null;
+
+      // 縮圖 URL：僅 Supabase 圖片才套用轉換，加速畫廊載入
+      let thumbCover = originalCover;
+      if (thumbCover && thumbCover.includes(SB_URL)) {
+        thumbCover = thumbCover.replace('/object/public/', '/render/image/public/') + '?width=600&quality=80';
       }
-      // =====================================
 
-      return{
-        idx:String(i+1).padStart(3,'0'),
-        id:pg.id,
-        name:p['娃衣名稱']?.title?.[0]?.text?.content||'Untitled',
-        doll:p['試穿娃娃']?.select?.name ? [p['試穿娃娃'].select.name] : [],
-        style:p['款式']?.multi_select?.map(t=>t.name)||[],
-        size:p['娃娃尺寸']?.number||null,
-        tags:p['標籤']?.multi_select?.map(t=>t.name)||[],
-        note:p['備註']?.rich_text?.[0]?.text?.content||'',
-        shop:p['商家連結或名稱']?.rich_text?.[0]?.text?.content||'',
-        origin:p['產地']?.select?.name||'',
-        cover: rawCover, // 這裡改用我們處理過後的 rawCover
+      return {
+        idx:       String(i + 1).padStart(3, '0'),
+        id:        pg.id,
+        name:      p['娃衣名稱']?.title?.[0]?.text?.content || 'Untitled',
+        doll:      p['試穿娃娃']?.select?.name ? [p['試穿娃娃'].select.name] : [],
+        style:     p['款式']?.multi_select?.map(t => t.name) || [],
+        size:      p['娃娃尺寸']?.number || null,
+        tags:      p['標籤']?.multi_select?.map(t => t.name) || [],
+        note:      p['備註']?.rich_text?.[0]?.text?.content || '',
+        shop:      p['商家連結或名稱']?.rich_text?.[0]?.text?.content || '',
+        origin:    p['產地']?.select?.name || '',
+        cover:     thumbCover,     // 畫廊縮圖（壓縮版）
+        fullCover: originalCover,  // Modal 原圖（完整版）
       };
     });
+
     buildFilters();
     applyFilters();
-  }catch(e){
-    document.getElementById('gallery').innerHTML='<div class="empty">載入失敗</div>';
-    document.getElementById('rcount').textContent='error';
+  } catch (e) {
+    document.getElementById('gallery').innerHTML = '<div class="empty">載入失敗</div>';
+    document.getElementById('rcount').textContent = 'error';
   }
 }
 
-function buildFilters(){
-  const styles=[...new Set(items.flatMap(i=>i.style).filter(Boolean))].sort();
-  renderCBs('fl-style',styles,aStyles);
-  // populate upload select dynamically
-  // styles available for autocomplete (used by showAC)
 
-  const dolls=[...new Set(items.flatMap(i=>i.doll).filter(Boolean))].sort();
-  renderCBs('fl-doll',dolls,aDolls);
+/* ══════════════════════════════════════════
+   篩選器建構：依資料動態產生 Checkbox 列表
+══════════════════════════════════════════ */
+function buildFilters() {
+  // 款式
+  const styles = [...new Set(items.flatMap(i => i.style).filter(Boolean))].sort();
+  renderCBs('fl-style', styles, aStyles);
 
-  const tm={};items.forEach(i=>i.tags.forEach(t=>tm[t]=(tm[t]||0)+1));
-  const tags=Object.keys(tm).sort((a,b)=>tm[b]-tm[a]);
-  renderCBs('fl-tags',tags,aTags,tm);
+  // 娃娃
+  const dolls = [...new Set(items.flatMap(i => i.doll).filter(Boolean))].sort();
+  renderCBs('fl-doll', dolls, aDolls);
+
+  // 標籤（依使用頻率由高至低排序）
+  const tm = {};
+  items.forEach(i => i.tags.forEach(t => tm[t] = (tm[t] || 0) + 1));
+  const tags = Object.keys(tm).sort((a, b) => tm[b] - tm[a]);
+  renderCBs('fl-tags', tags, aTags, tm);
 }
 
+/* 產生單一 Checkbox 列（label + count）*/
 function makeRow(id, v, activeSet, cmap) {
   const checked = activeSet.has(v) ? 'checked' : '';
-  const cnt = cmap ? '<span class="cnt">' + cmap[v] + '</span>' : '';
+  const cnt     = cmap ? '<span class="cnt">' + cmap[v] + '</span>' : '';
   return '<label class="filter-row">'
-    + '<input type="checkbox" value="' + v + '" ' + checked + ' onchange="tog(\'' + id + '\',\'' + v.replace(/'/g,"\\'") + '\',this.checked)">'
+    + '<input type="checkbox" value="' + v + '" ' + checked
+    + ' onchange="tog(\'' + id + '\',\'' + v.replace(/'/g, "\\'") + '\',this.checked)">'
     + '<span class="flabel">' + v + '</span>'
     + cnt
     + '</label>';
 }
 
-function renderCBs(id, vals, activeSet, cmap, maxShow=6) {
+/* 渲染 Checkbox 列表，預設最多顯示 6 項，其餘收合 */
+function renderCBs(id, vals, activeSet, cmap, maxShow = 6) {
   const el = document.getElementById(id);
   if (!vals.length) { el.innerHTML = '<span style="font-size:11px;color:var(--muted)">—</span>'; return; }
+
   const shown = vals.slice(0, maxShow);
-  const rest = vals.slice(maxShow);
+  const rest  = vals.slice(maxShow);
+
   let html = shown.map(v => makeRow(id, v, activeSet, cmap)).join('');
   if (rest.length) {
-    html += '<div id="' + id + '-more" style="display:none">' + rest.map(v => makeRow(id, v, activeSet, cmap)).join('') + '</div>';
+    html += '<div id="' + id + '-more" style="display:none">'
+          + rest.map(v => makeRow(id, v, activeSet, cmap)).join('')
+          + '</div>';
     html += '<button class="show-more-btn" onclick="toggleMore(\'' + id + '-more\',this)">+ ' + rest.length + ' 更多</button>';
   }
   el.innerHTML = html;
 }
 
-function toggleMore(id,btn){
-  const el=document.getElementById(id);
-  const hidden=el.style.display==='none';
-  el.style.display=hidden?'':'none';
-  btn.textContent=hidden?'− 收起':'+ '+(el.children.length)+' 更多';
+/* 展開 / 收合「更多」區塊 */
+function toggleMore(id, btn) {
+  const el     = document.getElementById(id);
+  const hidden = el.style.display === 'none';
+  el.style.display = hidden ? '' : 'none';
+  btn.textContent  = hidden ? '− 收起' : '+ ' + el.children.length + ' 更多';
 }
 
-
+/* 即時搜尋篩選列表（展開隱藏項目並隱藏不符合者）*/
 function filterSearch(listId, q) {
   const container = document.getElementById(listId);
-  const ql = q.toLowerCase();
-  const moreDiv = document.getElementById(listId + '-more');
-  const moreBtn = container.querySelector('.show-more-btn');
+  const ql        = q.toLowerCase();
+  const moreDiv   = document.getElementById(listId + '-more');
+  const moreBtn   = container.querySelector('.show-more-btn');
 
   if (q) {
-    // 搜尋中：展開隱藏區塊，隱藏「更多」按鈕
+    // 搜尋中：展開所有隱藏項目，隱藏「更多」按鈕
     if (moreDiv) moreDiv.style.display = '';
     if (moreBtn) moreBtn.style.display = 'none';
   } else {
-    // 清空搜尋：恢復收合狀態
+    // 清空：恢復預設收合狀態
     if (moreDiv) moreDiv.style.display = 'none';
     if (moreBtn) {
       const count = moreDiv ? moreDiv.querySelectorAll('.filter-row').length : 0;
-      moreBtn.textContent = '+ ' + count + ' 更多';
+      moreBtn.textContent  = '+ ' + count + ' 更多';
       moreBtn.style.display = '';
     }
   }
 
-  // 過濾每一列（含隱藏區塊內的項目）
+  // 逐列比對，隱藏不包含關鍵字的項目
   container.querySelectorAll('.filter-row').forEach(row => {
     const label = row.querySelector('.flabel');
     if (!label) return;
@@ -542,126 +830,178 @@ function filterSearch(listId, q) {
   });
 }
 
-function tog(gid,val,on){
-  const m={'fl-style':aStyles,'fl-doll':aDolls,'fl-tags':aTags};
-  on?m[gid].add(val):m[gid].delete(val);
+/* 切換 Checkbox 勾選狀態並重新篩選 */
+function tog(gid, val, on) {
+  const m = { 'fl-style': aStyles, 'fl-doll': aDolls, 'fl-tags': aTags };
+  on ? m[gid].add(val) : m[gid].delete(val);
   applyFilters();
 }
 
-let _ft=null;
-function applyFilters(){
-  if(_ft)clearTimeout(_ft);_ft=setTimeout(_doFilter,60);
+
+/* ══════════════════════════════════════════
+   篩選邏輯（防抖 60ms，避免頻繁重繪）
+══════════════════════════════════════════ */
+let _ft = null;
+function applyFilters() {
+  if (_ft) clearTimeout(_ft);
+  _ft = setTimeout(_doFilter, 60);
 }
-function _doFilter(){
-  const q=(document.getElementById('searchQ').value||'').toLowerCase();
-  const sMin=parseFloat(document.getElementById('sz-min').value)||null;
-  const sMax=parseFloat(document.getElementById('sz-max').value)||null;
-  const f=items.filter(item=>{
-    if(q&&!item.name.toLowerCase().includes(q)&&!item.doll.join('').toLowerCase().includes(q))return false;
-    if(aStyles.size&&![...aStyles].some(s=>item.style.includes(s)))return false;
-    if(aDolls.size&&![...aDolls].some(d=>item.doll.includes(d)))return false;
-    if(aTags.size&&![...aTags].every(t=>item.tags.includes(t)))return false;
-    if(sMin!==null&&(item.size===null||item.size<sMin))return false;
-    if(sMax!==null&&(item.size===null||item.size>sMax))return false;
+
+function _doFilter() {
+  const q    = (document.getElementById('searchQ').value || '').toLowerCase();
+  const sMin = parseFloat(document.getElementById('sz-min').value) || null;
+  const sMax = parseFloat(document.getElementById('sz-max').value) || null;
+
+  const f = items.filter(item => {
+    // 關鍵字搜尋（名稱或娃娃名）
+    if (q && !item.name.toLowerCase().includes(q) && !item.doll.join('').toLowerCase().includes(q)) return false;
+    // 款式篩選（任一款式符合即通過）
+    if (aStyles.size && ![...aStyles].some(s => item.style.includes(s))) return false;
+    // 娃娃篩選（任一娃娃符合即通過）
+    if (aDolls.size  && ![...aDolls].some(d => item.doll.includes(d)))   return false;
+    // 標籤篩選（必須包含所有選取的標籤）
+    if (aTags.size   && ![...aTags].every(t => item.tags.includes(t)))   return false;
+    // 尺寸範圍篩選
+    if (sMin !== null && (item.size === null || item.size < sMin)) return false;
+    if (sMax !== null && (item.size === null || item.size > sMax)) return false;
     return true;
   });
-  document.getElementById('rcount').textContent=`${f.length} ITEMS`;
-  const g=document.getElementById('gallery');
-  if(!f.length){g.innerHTML='<div class="empty">No results found.</div>';return;}
-  g.innerHTML=f.map(item=>`
-    <div class="card" onclick='openDetail(${JSON.stringify(item).replace(/'/g,"&#39;")})'>
+
+  document.getElementById('rcount').textContent = `${f.length} ITEMS`;
+
+  const g = document.getElementById('gallery');
+  if (!f.length) { g.innerHTML = '<div class="empty">No results found.</div>'; return; }
+
+  g.innerHTML = f.map(item => `
+    <div class="card" onclick='openDetail(${JSON.stringify(item).replace(/'/g, "&#39;")})'>
       <div class="card-img" style="aspect-ratio:1">
-        ${item.cover?`<img src="${item.cover}" alt="${item.name}" loading="lazy" decoding="async">`:`<div class="card-no-img" style="aspect-ratio:1">○</div>`}
+        ${item.cover
+          ? `<img src="${item.cover}" alt="${item.name}" loading="lazy" decoding="async">`
+          : `<div class="card-no-img" style="aspect-ratio:1">○</div>`
+        }
       </div>
       <div class="card-body">
         <div class="card-num">No.${item.idx}</div>
         <div class="card-title">${item.name}</div>
-        <div class="card-meta">${[item.doll.join(' / '),item.size?item.size+'cm':''].filter(v=>v).join('  ·  ')}</div>
+        <div class="card-meta">${[item.doll.join(' / '), item.size ? item.size + 'cm' : ''].filter(v => v).join('  ·  ')}</div>
         <div class="tag-list">
-          ${item.style.map(t=>`<span class="tag" style="border-color:var(--accent);color:var(--accent)">${t}</span>`).join('')}
-          ${item.tags.map(t=>`<span class="tag">${t}</span>`).join('')}
+          ${item.style.map(t => `<span class="tag" style="border-color:var(--accent);color:var(--accent)">${t}</span>`).join('')}
+          ${item.tags.map(t => `<span class="tag">${t}</span>`).join('')}
         </div>
       </div>
-    </div>`).join('');
+    </div>
+  `).join('');
 }
 
-function clearFilters(){
-  aStyles.clear();aDolls.clear();aTags.clear();
-  document.getElementById('sz-min').value='';
-  document.getElementById('sz-max').value='';
-  document.getElementById('searchQ').value='';
-  document.querySelectorAll('.filter-row input').forEach(c=>c.checked=false);
+/* 清除所有篩選條件並重新載入 */
+function clearFilters() {
+  aStyles.clear(); aDolls.clear(); aTags.clear();
+  document.getElementById('sz-min').value  = '';
+  document.getElementById('sz-max').value  = '';
+  document.getElementById('searchQ').value = '';
+  document.querySelectorAll('.filter-row input').forEach(c => c.checked = false);
   applyFilters();
 }
 
+
+/* ══════════════════════════════════════════
+   側邊欄開關
+══════════════════════════════════════════ */
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('open');
   document.getElementById('sidebarOverlay').classList.toggle('open');
 }
 
-function openDetail(item){
-  document.getElementById('detContent').innerHTML=`
-    ${item.cover?`<img class="detail-img" src="${item.cover}" alt="${item.name}">`:''}
+
+/* ══════════════════════════════════════════
+   Detail Modal：顯示造型詳細資訊
+══════════════════════════════════════════ */
+function openDetail(item) {
+  document.getElementById('detContent').innerHTML = `
+    ${item.fullCover ? `<img class="detail-img" src="${item.fullCover}" alt="${item.name}">` : ''}
     <div class="detail-title">${item.name}</div>
     <div class="detail-rows">
-      ${item.doll.length?`<div class="dr"><span class="dk">娃娃</span><span>${item.doll.join(', ')}</span></div>`:''}
-      ${item.style.length?`<div class="dr"><span class="dk">款式</span><span>${item.style.join(', ')}</span></div>`:''}
-      ${item.size?`<div class="dr"><span class="dk">尺寸</span><span>${item.size} cm</span></div>`:''}
-      ${item.origin?`<div class="dr"><span class="dk">產地</span><span>${item.origin}</span></div>`:''}
-      ${item.tags.length?`<div class="dr"><span class="dk">標籤</span><div class="tag-list">${item.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div></div>`:''}
-      ${item.shop?`<div class="dr"><span class="dk">商家</span><span>${item.shop.startsWith('http')?`<a href="${item.shop}" target="_blank" style="color:var(--text);text-decoration:underline;word-break:break-all">${item.shop}</a>`:`${item.shop}`}</span></div>`:''}
-      ${item.note?`<div class="dr"><span class="dk">備註</span><span style="line-height:1.6">${item.note}</span></div>`:''}
-    </div>`;
+      ${item.doll.length   ? `<div class="dr"><span class="dk">娃娃</span><span>${item.doll.join(', ')}</span></div>` : ''}
+      ${item.style.length  ? `<div class="dr"><span class="dk">款式</span><span>${item.style.join(', ')}</span></div>` : ''}
+      ${item.size          ? `<div class="dr"><span class="dk">尺寸</span><span>${item.size} cm</span></div>` : ''}
+      ${item.origin        ? `<div class="dr"><span class="dk">產地</span><span>${item.origin}</span></div>` : ''}
+      ${item.tags.length   ? `<div class="dr"><span class="dk">標籤</span><div class="tag-list">${item.tags.map(t => `<span class="tag">${t}</span>`).join('')}</div></div>` : ''}
+      ${item.shop          ? `<div class="dr"><span class="dk">商家</span><span>${
+          item.shop.startsWith('http')
+            ? `<a href="${item.shop}" target="_blank" style="color:var(--text);text-decoration:underline;word-break:break-all">${item.shop}</a>`
+            : item.shop
+        }</span></div>` : ''}
+      ${item.note          ? `<div class="dr"><span class="dk">備註</span><span style="line-height:1.6">${item.note}</span></div>` : ''}
+    </div>
+  `;
   document.getElementById('detModal').classList.add('open');
 }
 
-function openUpload(){document.getElementById('upModal').classList.add('open');}
-function closeUpload(){document.getElementById('upModal').classList.remove('open');}
 
-function handleFile(f){
-  if(!f)return;selFile=f;
-  const r=new FileReader();
-  r.onload=e=>{
-    const p=document.getElementById('upPreview');
-    p.src=e.target.result;p.style.display='block';
-    document.getElementById('upText').textContent=f.name;
-  };r.readAsDataURL(f);
+/* ══════════════════════════════════════════
+   Upload Modal：開關
+══════════════════════════════════════════ */
+function openUpload()  { document.getElementById('upModal').classList.add('open'); }
+function closeUpload() { document.getElementById('upModal').classList.remove('open'); }
+
+
+/* ══════════════════════════════════════════
+   圖片選取 & 拖曳上傳
+══════════════════════════════════════════ */
+function handleFile(f) {
+  if (!f) return;
+  selFile = f;
+  const r = new FileReader();
+  r.onload = e => {
+    const p = document.getElementById('upPreview');
+    p.src = e.target.result;
+    p.style.display = 'block';
+    document.getElementById('upText').textContent = f.name;
+  };
+  r.readAsDataURL(f);
 }
-function handleDrop(e){
+
+function handleDrop(e) {
   e.preventDefault();
   document.getElementById('upZone').classList.remove('over');
   handleFile(e.dataTransfer.files[0]);
 }
 
-// 新增：前端圖片壓縮函數
+
+/* ══════════════════════════════════════════
+   圖片壓縮（上傳前先縮圖，節省儲存與流量）
+   - maxSize：最長邊上限（預設 800px）
+   - 輸出格式：WebP，品質 80%
+══════════════════════════════════════════ */
 async function compressImage(file, maxSize = 800) {
   return new Promise((resolve) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       const img = new Image();
       img.onload = () => {
-        let width = img.width;
+        let width  = img.width;
         let height = img.height;
 
-        // 計算等比例縮放後的尺寸
+        // 等比例縮小（超過 maxSize 才縮）
         if (width > height && width > maxSize) {
           height *= maxSize / width;
-          width = maxSize;
+          width   = maxSize;
         } else if (height > maxSize) {
-          width *= maxSize / height;
-          height = maxSize;
+          width  *= maxSize / height;
+          height  = maxSize;
         }
 
         const canvas = document.createElement('canvas');
-        canvas.width = width;
+        canvas.width  = width;
         canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
 
-        // 轉換為 WebP 格式，品質設定為 0.8 (80%)
-        canvas.toBlob((blob) => {
-          resolve(new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".webp", { type: 'image/webp' }));
-        }, 'image/webp', 0.8);
+        // 轉換為 WebP，品質 80%
+        canvas.toBlob(
+          blob => resolve(new File([blob], file.name.replace(/\.[^/.]+$/, '') + '.webp', { type: 'image/webp' })),
+          'image/webp',
+          0.8
+        );
       };
       img.src = e.target.result;
     };
@@ -669,125 +1009,181 @@ async function compressImage(file, maxSize = 800) {
   });
 }
 
-async function uploadImg(file){
-  const ext=file.name.split('.').pop().toLowerCase();
-  const fname=`${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-  const res=await fetch(`${SB_URL}/storage/v1/object/outfit-photos/${fname}`,{
-    method:'POST',
-    headers:{'Authorization':`Bearer ${SB_KEY}`,'Content-Type':file.type,'x-upsert':'true'},
-    body:file
+
+/* ══════════════════════════════════════════
+   圖片上傳至 Supabase Storage
+══════════════════════════════════════════ */
+async function uploadImg(file) {
+  const ext   = file.name.split('.').pop().toLowerCase();
+  const fname = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+
+  const res = await fetch(`${SB_URL}/storage/v1/object/outfit-photos/${fname}`, {
+    method:  'POST',
+    headers: { 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': file.type, 'x-upsert': 'true' },
+    body:    file,
   });
-  if(!res.ok){const t=await res.text();throw new Error(t);}
-  return`${BUCKET}/${fname}`;
+
+  if (!res.ok) { const t = await res.text(); throw new Error(t); }
+  return `${BUCKET}/${fname}`;
 }
 
-async function submitForm(){
-  const name=document.getElementById('f-name').value.trim();
-  if(!name){setStatus('請填寫造型名稱','err');return;}
-  if(!selFile){setStatus('請選擇照片','err');return;}
-  const btn=document.getElementById('subBtn');
-  btn.disabled=true;setStatus('Uploading image...','');
-  try{
-    setStatus('Compressing image...','');
-    const compressedFile = await compressImage(selFile); 
+
+/* ══════════════════════════════════════════
+   表單送出：壓縮圖片 → 上傳 → 寫入 Notion
+══════════════════════════════════════════ */
+async function submitForm() {
+  const name = document.getElementById('f-name').value.trim();
+  if (!name)    { setStatus('請填寫造型名稱', 'err'); return; }
+  if (!selFile) { setStatus('請選擇照片',     'err'); return; }
+
+  const btn = document.getElementById('subBtn');
+  btn.disabled = true;
+
+  try {
+    setStatus('Compressing image...', '');
+    const compressedFile = await compressImage(selFile);
+
+    setStatus('Uploading image...', '');
     const imageUrl = await uploadImg(compressedFile);
-    setStatus('Writing to Notion...','');
-    const tagsRaw=document.getElementById('f-tags').value;
-    const tags=tagsRaw?tagsRaw.split(/[,，]/).map(t=>t.trim()).filter(Boolean):[];
-    const shop=document.getElementById('f-shop').value.trim();
-    const res=await fetch(EDGE,{
-      method:'POST',headers:hdrs,
-      body:JSON.stringify({action:'create',data:{
-        name,imageUrl,
-        doll:document.getElementById('f-doll').value.trim(),
-        style:document.getElementById('f-style').value.split(/[,，]/).map(s=>s.trim()).filter(Boolean),
-        size:document.getElementById('f-size').value,
-        tags,
-        note:document.getElementById('f-note').value.trim(),
-        shop:shop.startsWith('http')?shop:'',
-        origin:document.getElementById('f-origin').value,
-      }})
+
+    setStatus('Writing to Notion...', '');
+
+    // 解析標籤（逗號或中文逗號分隔）
+    const tagsRaw = document.getElementById('f-tags').value;
+    const tags    = tagsRaw ? tagsRaw.split(/[,，]/).map(t => t.trim()).filter(Boolean) : [];
+
+    const shop = document.getElementById('f-shop').value.trim();
+
+    const res = await fetch(EDGE, {
+      method:  'POST',
+      headers: hdrs,
+      body: JSON.stringify({
+        action: 'create',
+        data: {
+          name,
+          imageUrl,
+          doll:   document.getElementById('f-doll').value.trim(),
+          style:  document.getElementById('f-style').value.split(/[,，]/).map(s => s.trim()).filter(Boolean),
+          size:   document.getElementById('f-size').value,
+          tags,
+          note:   document.getElementById('f-note').value.trim(),
+          shop:   shop.startsWith('http') ? shop : '', // 只接受完整網址
+          origin: document.getElementById('f-origin').value,
+        }
+      })
     });
-    const rd=await res.json();
-    if(!res.ok||rd.object==='error')throw new Error(rd.message||JSON.stringify(rd));
-    setStatus('Done ✓','ok');
-    setTimeout(()=>{closeUpload();resetForm();load();},1200);
-  }catch(e){setStatus('Error: '+e.message,'err');}
-  finally{btn.disabled=false;}
+
+    const rd = await res.json();
+    if (!res.ok || rd.object === 'error') throw new Error(rd.message || JSON.stringify(rd));
+
+    setStatus('Done ✓', 'ok');
+    setTimeout(() => { closeUpload(); resetForm(); load(); }, 1200);
+  } catch (e) {
+    setStatus('Error: ' + e.message, 'err');
+  } finally {
+    btn.disabled = false;
+  }
 }
 
-// ── Autocomplete ──
+
+/* ══════════════════════════════════════════
+   Autocomplete（輸入框即時建議）
+   - ac-name / ac-doll：單一選取
+   - ac-style / ac-tags：逗號分隔多選，補全最後一個 token
+══════════════════════════════════════════ */
 const AC_SOURCES = {
-  'ac-name': () => [...new Set(items.map(i => i.name).filter(Boolean))].sort(),
-  'ac-doll': () => [...new Set(items.flatMap(i => i.doll).filter(Boolean))].sort(),
+  'ac-name':  () => [...new Set(items.map(i => i.name).filter(Boolean))].sort(),
+  'ac-doll':  () => [...new Set(items.flatMap(i => i.doll).filter(Boolean))].sort(),
   'ac-style': () => [...new Set(items.flatMap(i => i.style).filter(Boolean))].sort(),
-  'ac-tags': () => {
+  'ac-tags':  () => {
     const tm = {};
-    items.forEach(i => i.tags.forEach(t => tm[t] = (tm[t]||0)+1));
-    return Object.keys(tm).sort((a,b) => tm[b]-tm[a]);
+    items.forEach(i => i.tags.forEach(t => tm[t] = (tm[t] || 0) + 1));
+    return Object.keys(tm).sort((a, b) => tm[b] - tm[a]); // 依頻率排序
   },
 };
 
 function showAC(input, listId) {
-  const rawQ = input.value;
-  // for tags and style, autocomplete the last token after comma
-  const isMulti = listId === 'ac-tags' || listId === 'ac-style';
-  const q = isMulti ? rawQ.split(/[,，]/).pop().trim().toLowerCase() : rawQ.trim().toLowerCase();
-  const list = document.getElementById(listId);
+  const rawQ  = input.value;
+  const isMulti = listId === 'ac-tags' || listId === 'ac-style'; // 多選欄位補全最後一個 token
+  const q     = isMulti ? rawQ.split(/[,，]/).pop().trim().toLowerCase() : rawQ.trim().toLowerCase();
+  const list  = document.getElementById(listId);
+
   if (!q) { list.style.display = 'none'; return; }
+
   const opts = AC_SOURCES[listId]().filter(v => v.toLowerCase().includes(q)).slice(0, 10);
   if (!opts.length) { list.style.display = 'none'; return; }
+
   list.innerHTML = opts.map(v => {
-    const safe = v.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+    const safe  = v.replace(/&/g, '&amp;').replace(/</g, '&lt;');
     const safeQ = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const hi = safe.replace(new RegExp('(' + safeQ + ')', 'gi'), '<b>$1</b>');
-    return '<div class="ac-item" onmousedown="pickAC(event,\'' + input.id + '\',\'' + listId + '\',\'' + v.replace(/'/g,"\\'") + '\')">' + hi + '</div>';
+    const hi    = safe.replace(new RegExp('(' + safeQ + ')', 'gi'), '<b>$1</b>'); // 高亮匹配字元
+    return '<div class="ac-item" onmousedown="pickAC(event,\'' + input.id + '\',\'' + listId + '\',\'' + v.replace(/'/g, "\\'") + '\')">' + hi + '</div>';
   }).join('');
   list.style.display = 'block';
 }
 
+/* 選取 Autocomplete 建議項目 */
 function pickAC(e, inputId, listId, val) {
   e.preventDefault();
   const input = document.getElementById(inputId);
+
   if (listId === 'ac-tags' || listId === 'ac-style') {
-    // replace last token
+    // 替換最後一個逗號後的 token
     const parts = input.value.split(',');
     parts[parts.length - 1] = ' ' + val;
     input.value = parts.join(', ').replace(/^\s*,\s*/, '') + ', ';
   } else {
     input.value = val;
   }
+
   document.getElementById(listId).style.display = 'none';
   input.focus();
 }
 
-document.addEventListener('click', e => {
-  ['ac-name','ac-doll','ac-style','ac-tags'].forEach(id => {
+/* 點擊其他地方時關閉所有 Autocomplete 列表 */
+document.addEventListener('click', () => {
+  ['ac-name', 'ac-doll', 'ac-style', 'ac-tags'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
   });
 });
 
 
+/* ══════════════════════════════════════════
+   工具函式
+══════════════════════════════════════════ */
 
-function setStatus(msg,cls){
-  const el=document.getElementById('statusMsg');
-  el.textContent=msg;el.className='status-msg '+(cls||'');
-}
-function resetForm(){
-  ['f-name','f-doll','f-style','f-size','f-tags','f-shop','f-note'].forEach(id=>document.getElementById(id).value='');
-
-  document.getElementById('f-origin').value='';
-  document.getElementById('upPreview').style.display='none';
-  document.getElementById('upText').textContent='點擊或拖曳上傳';
-  selFile=null;setStatus('','');
+/* 更新送出狀態提示文字（cls: '' | 'ok' | 'err'）*/
+function setStatus(msg, cls) {
+  const el = document.getElementById('statusMsg');
+  el.textContent = msg;
+  el.className   = 'status-msg ' + (cls || '');
 }
 
-document.getElementById('upModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeUpload();});
-document.getElementById('detModal').addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.classList.remove('open');});
+/* 重置 Upload 表單至初始狀態 */
+function resetForm() {
+  ['f-name', 'f-doll', 'f-style', 'f-size', 'f-tags', 'f-shop', 'f-note'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('f-origin').value         = '';
+  document.getElementById('upPreview').style.display = 'none';
+  document.getElementById('upText').textContent      = '點擊或拖曳上傳';
+  selFile = null;
+  setStatus('', '');
+}
 
+
+/* ══════════════════════════════════════════
+   Modal 點擊背景關閉
+══════════════════════════════════════════ */
+document.getElementById('upModal').addEventListener('click',  e => { if (e.target === e.currentTarget) closeUpload(); });
+document.getElementById('detModal').addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.classList.remove('open'); });
+
+
+/* ══════════════════════════════════════════
+   初始化：載入資料
+══════════════════════════════════════════ */
 load();
-
 
 </script>
 </body>
