@@ -19,41 +19,10 @@
 
 ## 技術架構
 
-\`\`\`
-使用者瀏覽器
-     │
-     │  靜態 HTML/CSS/JS（單一 index.html）
-     │  部署於 Vercel
-     │
-     ├─── 讀取造型資料 ───────────────────────────────────────────────────┐
-     │    GET /rest/v1/outfits                                           │
-     │                                                                   ▼
-     ├─── 讀取清單（娃娃 / 款式 / 標籤）─────────────────────────────────┤
-     │    GET /rest/v1/dolls                                       Supabase
-     │    GET /rest/v1/styles                                    PostgreSQL DB
-     │    GET /rest/v1/tags                                             │
-     │                                                                   │
-     ├─── 新增造型 ───────────────────────────────────────────────────────┤
-     │    POST /rest/v1/outfits（馬上寫入，立即顯示）                      │
-     │                                                                   │
-     └─── 上傳圖片 ──────────────────────────────────────────────────────┤
-          PUT /storage/v1/object/outfit-photos/<filename>               │
-                                                                        ▼
-                                                           Supabase Storage
-                                                           bucket: outfit-photos
-                                                           CDN: Cloudflare
-                                                           縮圖: Image Transform API
-
-     新增造型後，背景非同步備份至 Notion：
-     POST /functions/v1/notion-proxy  { action: "create" }
-          └─ notion-proxy (Deno Edge Function)
-               └─ POST https://api.notion.com/v1/pages
-\`\`\`
-
 | 層級 | 技術 |
 |------|------|
 | 前端 | 純 HTML / CSS / Vanilla JS（單一 `index.html`，無框架） |
-| 主資料庫 | [Supabase](https://supabase.com) PostgreSQL — 造型快取、娃娃／款式／標籤清單 |
+| 主資料庫 | [Supabase](https://supabase.com) PostgreSQL — 造型資料、娃娃／款式／標籤清單 |
 | 備份資料庫 | [Notion](https://notion.so) — 新增造型時非同步備份，方便人工管理 |
 | 後端 API | [Supabase Edge Functions](https://supabase.com/docs/guides/functions) — `notion-proxy`（備份）、`sync-notion`（初始匯入） |
 | 圖片儲存 | Supabase Storage（`outfit-photos` bucket） |
@@ -66,32 +35,32 @@
 
 ### 讀取造型
 
-\`\`\`
-index.html
-  └─ GET /rest/v1/outfits?order=created_at.desc
-       └─ Supabase PostgreSQL（outfits table）
-            └─ 回傳 JSON → 前端解析並渲染畫廊
-\`\`\`
+```
+Vercel (index.html)
+  --> GET /rest/v1/outfits        [Supabase PostgreSQL]
+  --> GET /rest/v1/dolls          [娃娃清單]
+  --> GET /rest/v1/styles         [款式清單]
+  --> GET /rest/v1/tags           [標籤清單]
+```
 
 ### 新增造型
 
-\`\`\`
-index.html（使用者填表 + 選擇照片）
-  ├─ 1. 圖片壓縮（Canvas → WebP, max 800px）
-  ├─ 2. PUT Supabase Storage → 取得公開圖片 URL
-  ├─ 3. POST /rest/v1/outfits → 寫入 Supabase DB（馬上出現在網站）
-  ├─ 4. 自動把新娃娃／款式／標籤寫入對應 table
-  └─ 5. 非同步 POST /functions/v1/notion-proxy { action: "create" }（備份）
-\`\`\`
+```
+使用者填表 + 上傳照片
+  1. 圖片壓縮 (Canvas -> WebP, max 800px)
+  2. PUT /storage/v1/object/outfit-photos/<filename>   [Supabase Storage]
+  3. POST /rest/v1/outfits                             [馬上寫入 DB，立即顯示]
+  4. 新 doll/style/tag 自動寫入對應 table
+  5. POST /functions/v1/notion-proxy (背景備份至 Notion)
+```
 
 ### 初始資料匯入（從 Notion 同步至 Supabase）
 
-\`\`\`
+```
 curl -X POST .../functions/v1/sync-notion
-  └─ sync-notion (Deno Edge Function)
-       ├─ 從 Notion Database 拉所有造型
-       └─ Upsert 進 Supabase outfits table
-\`\`\`
+  --> 從 Notion Database 拉所有造型
+  --> Upsert 進 Supabase outfits table
+```
 
 ---
 
@@ -124,17 +93,17 @@ curl -X POST .../functions/v1/sync-notion
 
 ## 專案結構
 
-\`\`\`
+```
 /
-├── index.html                           # 整個前端應用（HTML + CSS + JS）
+├── index.html
 ├── README.md
 └── supabase/
     └── functions/
         ├── notion-proxy/
-        │   └── index.ts                 # Notion CRUD proxy（備份用）
+        │   └── index.ts       # Notion CRUD proxy（備份用）
         └── sync-notion/
-            └── index.ts                 # 從 Notion 一次性匯入資料至 Supabase DB
-\`\`\`
+            └── index.ts       # 從 Notion 一次性匯入資料至 Supabase DB
+```
 
 ---
 
@@ -142,12 +111,11 @@ curl -X POST .../functions/v1/sync-notion
 
 這個專案是純靜態單頁，不需要任何 build 步驟。
 
-\`\`\`bash
-# 直接用瀏覽器打開，或用任意 static server
+```bash
 npx serve .
 # 或
 python3 -m http.server 8080
-\`\`\`
+```
 
 開啟後連到 `http://localhost:8080` 即可。
 
@@ -157,40 +125,33 @@ python3 -m http.server 8080
 
 ## 部署 Edge Functions
 
-\`\`\`bash
-# 安裝 Supabase CLI
+```bash
 npm install -g supabase
-
-# 登入並連結專案
 supabase login
 supabase link --project-ref <your-project-ref>
-
-# 設定 Notion Token（不要 commit 進 git！）
 supabase secrets set NOTION_TOKEN=secret_xxxxxxxxxxxx
-
-# 部署
 supabase functions deploy notion-proxy
 supabase functions deploy sync-notion
-\`\`\`
+```
 
 ---
 
 ## 環境變數 / 設定
 
-### 前端（index.html 頂部 `<script>`）
+### 前端（index.html 頂部 script 區塊）
 
-\`\`\`js
+```js
 const SB_URL = "https://<your-project>.supabase.co";
-const SB_KEY = "<your-anon-key>";   // Supabase public anon key（可公開）
-\`\`\`
+const SB_KEY = "<your-anon-key>";
+```
 
 ### Edge Function 環境變數
 
 | 變數名稱 | 說明 |
 |----------|------|
-| `NOTION_TOKEN` | Notion Integration Token（`secret_...`），**請勿 commit 至 git** |
-| `SUPABASE_URL` | 自動由 Supabase 注入，無需手動設定 |
-| `SUPABASE_SERVICE_ROLE_KEY` | 自動由 Supabase 注入，無需手動設定 |
+| `NOTION_TOKEN` | Notion Integration Token，**請勿 commit 至 git** |
+| `SUPABASE_URL` | 自動由 Supabase 注入 |
+| `SUPABASE_SERVICE_ROLE_KEY` | 自動由 Supabase 注入 |
 
 ---
 
