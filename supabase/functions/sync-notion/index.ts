@@ -33,9 +33,7 @@ Deno.serve(async (req) => {
 
     const outfits = (notionData.results || []).map((pg: any) => {
       const p = pg.properties;
-      const cover = pg.cover?.external?.url || pg.cover?.file?.url || null;
-      const safeCover = cover && !cover.includes("amazonaws.com") ? cover : null;
-      
+
       // 試穿娃娃：支援 select（舊）和 multi_select（新）
       const dollSelect = p["試穿娃娃"]?.select?.name;
       const dollMulti = p["試穿娃娃"]?.multi_select?.map((t: any) => t.name) || [];
@@ -51,7 +49,7 @@ Deno.serve(async (req) => {
         note: p["備註"]?.rich_text?.[0]?.text?.content || null,
         shop: p["商家連結或名稱"]?.rich_text?.[0]?.text?.content || null,
         origin: p["產地"]?.select?.name || null,
-        cover: safeCover,
+        // cover 完全不帶，保留 Supabase 已有的圖片
       };
     });
 
