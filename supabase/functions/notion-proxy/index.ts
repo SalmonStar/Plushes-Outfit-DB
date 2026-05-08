@@ -13,7 +13,6 @@ Deno.serve(async (req) => {
 
   const { action, data } = await req.json();
 
-  // ── LIST：查詢資料庫所有造型 ──────────────────────────────────────
   if (action === "list") {
     const res = await fetch(
       `https://api.notion.com/v1/databases/${DATABASE_ID}/query`,
@@ -36,7 +35,6 @@ Deno.serve(async (req) => {
     });
   }
 
-  // ── GET DOLLS：取得「試穿娃娃」欄位的所有 Select 選項 ────────────
   if (action === "getDolls") {
     const res = await fetch(
       `https://api.notion.com/v1/databases/${DATABASE_ID}`,
@@ -49,15 +47,16 @@ Deno.serve(async (req) => {
       }
     );
     const json = await res.json();
-    const options = json.properties?.["試穿娃娃"]?.select?.options || [];
+    const options = json.properties?.["試穿娃娃"]?.multi_select?.options || [];
     const names = options.map((o: { name: string }) => o.name).sort();
     return new Response(JSON.stringify({ dolls: names }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
-  // ── CREATE：新增一筆造型到 Notion ─────────────────────────────────
   if (action === "create") {
+    // dolls 是陣列，備份到 Notion 時用第一個娃娃當 select（Notion 是 multi_select）
+    const dolls: string[] = data.dolls || (data.doll ? [data.doll] : []);
     const res = await fetch("https://api.notion.com/v1/pages", {
       method: "POST",
       headers: {
@@ -72,7 +71,9 @@ Deno.serve(async (req) => {
           : undefined,
         properties: {
           "娃衣名稱": { title: [{ text: { content: data.name || "" } }] },
-          "試穿娃娃": data.doll ? { select: { name: data.doll } } : undefined,
+          "試穿娃娃": dolls.length
+            ? { multi_select: dolls.map((d: string) => ({ name: d })) }
+            : undefined,
           "款式": data.style?.length
             ? { multi_select: data.style.map((s: string) => ({ name: s })) }
             : undefined,

@@ -34,12 +34,17 @@ Deno.serve(async (req) => {
     const outfits = (notionData.results || []).map((pg: any) => {
       const p = pg.properties;
       const cover = pg.cover?.external?.url || pg.cover?.file?.url || null;
-      // Notion S3 暫時連結不覆蓋 Supabase Storage 的圖片
       const safeCover = cover && !cover.includes("amazonaws.com") ? cover : null;
+      
+      // 試穿娃娃：支援 select（舊）和 multi_select（新）
+      const dollSelect = p["試穿娃娃"]?.select?.name;
+      const dollMulti = p["試穿娃娃"]?.multi_select?.map((t: any) => t.name) || [];
+      const doll = dollMulti.length ? dollMulti : (dollSelect ? [dollSelect] : null);
+
       return {
         notion_id: pg.id,
         name: p["娃衣名稱"]?.title?.[0]?.text?.content || "Untitled",
-        doll: p["試穿娃娃"]?.select?.name || null,
+        doll,
         style: p["款式"]?.multi_select?.map((t: any) => t.name) || [],
         size: p["娃娃尺寸"]?.number || null,
         tags: p["標籤"]?.multi_select?.map((t: any) => t.name) || [],

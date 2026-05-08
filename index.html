@@ -650,8 +650,8 @@ onmouseleave="this.style.opacity='0.45'">
     <!-- 娃娃 & 款式（並排雙欄）-->
     <div class="two">
       <div class="fg" style="position:relative">
-        <label>試穿娃娃</label>
-        <input type="text" id="f-doll" placeholder="例：SUNSUN玩偶" autocomplete="off" oninput="showAC(this,'ac-doll')">
+        <label>試穿娃娃（逗號分隔）</label>
+        <input type="text" id="f-doll" placeholder="例：GSC若葉睦, GSC高松燈" autocomplete="off" oninput="showAC(this,'ac-doll')">
         <div id="ac-doll" class="ac-list"></div>
       </div>
       <div class="fg" style="position:relative">
@@ -764,7 +764,7 @@ async function load() {
         idx:       String(i + 1).padStart(3, '0'),
         id:        row.id,
         name:      row.name || 'Untitled',
-        doll:      row.doll ? [row.doll] : [],
+        doll:      row.doll || [],
         style:     row.style || [],
         size:      row.size || null,
         tags:      row.tags || [],
@@ -1187,7 +1187,7 @@ async function submitForm() {
     const tagsRaw = document.getElementById('f-tags').value;
     const tags    = tagsRaw ? tagsRaw.split(/[,，]/).map(t => t.trim()).filter(Boolean) : [];
     const shop    = document.getElementById('f-shop').value.trim();
-    const doll    = document.getElementById('f-doll').value.trim();
+    const doll    = document.getElementById('f-doll').value.split(/[,，]/).map(s => s.trim()).filter(Boolean);
     const style   = document.getElementById('f-style').value.split(/[,，]/).map(s => s.trim()).filter(Boolean);
     const size    = document.getElementById('f-size').value;
     const note    = document.getElementById('f-note').value.trim();
@@ -1205,7 +1205,7 @@ async function submitForm() {
       body: JSON.stringify({
         name,
         cover:  imageUrl,
-        doll:   doll || null,
+        doll:   doll.length ? doll : null,
         style,
         size:   size ? Number(size) : null,
         tags,
@@ -1247,7 +1247,7 @@ async function submitForm() {
       headers: hdrs,
       body: JSON.stringify({
         action: 'create',
-        data: { name, imageUrl, doll, style, size, tags, note, shop: shop.startsWith('http') ? shop : '', origin }
+        data: { name, imageUrl, dolls: doll, style, size, tags, note, shop: shop.startsWith('http') ? shop : '', origin }
       })
     }).catch(() => {});
 
