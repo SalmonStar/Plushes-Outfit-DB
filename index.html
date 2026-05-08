@@ -1326,15 +1326,15 @@ function pickAC(e, inputId, listId, val) {
   const input = document.getElementById(inputId);
 
   if (listId === 'ac-tags' || listId === 'ac-style' || listId === 'ac-doll') {
-    // 已選過的值不重複加入
-    const existing = input.value.split(/[,，]/).map(s => s.trim()).filter(Boolean);
-    if (existing.includes(val)) {
-      const parts = input.value.split(',');
+    // 逗號前面已確認的值才算「已選過」，最後一個輸入中的 token 不算
+    const parts = input.value.split(',');
+    const confirmed = parts.slice(0, -1).map(s => s.trim()).filter(Boolean);
+    if (confirmed.includes(val)) {
+      // 已存在：只清掉最後一個未完成的 token
       parts[parts.length - 1] = '';
-      input.value = parts.join(', ').replace(/,\s*$/, '') + (parts.length > 1 ? ', ' : '');
+      input.value = parts.join(', ').replace(/,\s*$/, '') + ', ';
     } else {
-      // 替換最後一個逗號後的 token
-      const parts = input.value.split(',');
+      // 正常補全：替換最後一個逗號後的 token
       parts[parts.length - 1] = ' ' + val;
       input.value = parts.join(', ').replace(/^\s*,\s*/, '') + ', ';
     }

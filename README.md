@@ -54,13 +54,16 @@ Vercel (index.html)
   5. POST /functions/v1/notion-proxy (背景備份至 Notion)
 ```
 
-### 初始資料匯入（從 Notion 同步至 Supabase）
+### 從 Notion 同步至 Supabase
 
 ```
-curl -X POST .../functions/v1/sync-notion
+./sync-notion.sh
+  --> 補齊 Supabase 裡缺少 notion_id 的筆（用名稱比對）
   --> 從 Notion Database 拉所有造型
-  --> Upsert 進 Supabase outfits table
+  --> Upsert 進 Supabase outfits table（cover 欄位不覆蓋）
 ```
+
+> 第一次使用前需給予執行權限：`chmod +x sync-notion.sh`
 
 ---
 
@@ -97,12 +100,13 @@ curl -X POST .../functions/v1/sync-notion
 /
 ├── index.html
 ├── README.md
+├── sync-notion.sh             # 一鍵同步 Notion → Supabase
 └── supabase/
     └── functions/
         ├── notion-proxy/
         │   └── index.ts       # Notion CRUD proxy（備份用）
         └── sync-notion/
-            └── index.ts       # 從 Notion 一次性匯入資料至 Supabase DB
+            └── index.ts       # 從 Notion 同步資料至 Supabase DB
 ```
 
 ---
