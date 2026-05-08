@@ -36,6 +36,26 @@ Deno.serve(async (req) => {
     });
   }
 
+  // ── GET DOLLS：取得「試穿娃娃」欄位的所有 Select 選項 ────────────
+  if (action === "getDolls") {
+    const res = await fetch(
+      `https://api.notion.com/v1/databases/${DATABASE_ID}`,
+      {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${NOTION_TOKEN}`,
+          "Notion-Version": "2022-06-28",
+        },
+      }
+    );
+    const json = await res.json();
+    const options = json.properties?.["試穿娃娃"]?.select?.options || [];
+    const names = options.map((o: { name: string }) => o.name).sort();
+    return new Response(JSON.stringify({ dolls: names }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   // ── CREATE：新增一筆造型到 Notion ─────────────────────────────────
   if (action === "create") {
     const res = await fetch("https://api.notion.com/v1/pages", {
