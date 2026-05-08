@@ -1183,12 +1183,12 @@ async function submitForm() {
 
     setStatus('Saving...', '');
 
-    // 解析標籤（逗號或中文逗號分隔）
+    // 解析標籤（逗號或中文逗號分隔），並去除重複值
     const tagsRaw = document.getElementById('f-tags').value;
-    const tags    = tagsRaw ? tagsRaw.split(/[,，]/).map(t => t.trim()).filter(Boolean) : [];
+    const tags    = tagsRaw ? [...new Set(tagsRaw.split(/[,，]/).map(t => t.trim()).filter(Boolean))] : [];
     const shop    = document.getElementById('f-shop').value.trim();
-    const doll    = document.getElementById('f-doll').value.split(/[,，]/).map(s => s.trim()).filter(Boolean);
-    const style   = document.getElementById('f-style').value.split(/[,，]/).map(s => s.trim()).filter(Boolean);
+    const doll    = [...new Set(document.getElementById('f-doll').value.split(/[,，]/).map(s => s.trim()).filter(Boolean))];
+    const style   = [...new Set(document.getElementById('f-style').value.split(/[,，]/).map(s => s.trim()).filter(Boolean))];
     const size    = document.getElementById('f-size').value;
     const note    = document.getElementById('f-note').value.trim();
     const origin  = document.getElementById('f-origin').value;
@@ -1300,13 +1300,15 @@ const AC_SOURCES = {
 
 function showAC(input, listId) {
   const rawQ  = input.value;
-  const isMulti = listId === 'ac-tags' || listId === 'ac-style'; // 多選欄位補全最後一個 token
+  const isMulti = listId === 'ac-tags' || listId === 'ac-style' || listId === 'ac-doll'; // 多選欄位補全最後一個 token
   const q     = isMulti ? rawQ.split(/[,，]/).pop().trim().toLowerCase() : rawQ.trim().toLowerCase();
   const list  = document.getElementById(listId);
 
   if (!q) { list.style.display = 'none'; return; }
 
-  const opts = AC_SOURCES[listId]().filter(v => v.toLowerCase().includes(q)).slice(0, 10);
+  // 多選欄位：過濾掉已經選過的值
+  const existing = isMulti ? rawQ.split(/[,，]/).map(s => s.trim()).filter(Boolean).slice(0, -1) : [];
+  const opts = AC_SOURCES[listId]().filter(v => v.toLowerCase().includes(q) && !existing.includes(v)).slice(0, 10);
   if (!opts.length) { list.style.display = 'none'; return; }
 
   list.innerHTML = opts.map(v => {
@@ -1323,11 +1325,19 @@ function pickAC(e, inputId, listId, val) {
   e.preventDefault();
   const input = document.getElementById(inputId);
 
-  if (listId === 'ac-tags' || listId === 'ac-style') {
-    // 替換最後一個逗號後的 token
-    const parts = input.value.split(',');
-    parts[parts.length - 1] = ' ' + val;
-    input.value = parts.join(', ').replace(/^\s*,\s*/, '') + ', ';
+  if (listId === 'ac-tags' || listId === 'ac-style' || listId === 'ac-doll') {
+    // 已選過的值不重複加入
+    const existing = input.value.split(/[,，]/).map(s => s.trim()).filter(Boolean);
+    if (existing.includes(val)) {
+      const parts = input.value.split(',');
+      parts[parts.length - 1] = '';
+      input.value = parts.join(', ').replace(/,\s*$/, '') + (parts.length > 1 ? ', ' : '');
+    } else {
+      // 替換最後一個逗號後的 token
+      const parts = input.value.split(',');
+      parts[parts.length - 1] = ' ' + val;
+      input.value = parts.join(', ').replace(/^\s*,\s*/, '') + ', ';
+    }
   } else {
     input.value = val;
   }
