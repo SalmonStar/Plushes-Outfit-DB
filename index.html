@@ -728,7 +728,9 @@ const BUCKET = `${SB_URL}/storage/v1/object/public/outfit-photos`; // Storage �
    全域狀態
 ══════════════════════════════════════════ */
 let items   = [];          // 從 Notion 載入的所有造型資料
-let allDolls = [];         // Notion 試穿娃娃欄位的完整選單
+let allDolls  = [];        // dolls table 完整清單
+let allStyles = [];        // styles table 完整清單
+let allTags   = [];        // tags table 完整清單
 let selFile = null;        // 使用者選取待上傳的圖片檔案
 
 // 目前啟用的篩選條件（Set 結構，方便新增／刪除）
@@ -776,11 +778,16 @@ async function load() {
       };
     });
 
-    // 抓 Notion 完整娃娃選單（chip 用）
+    // 從 Supabase DB 抓三個清單 table
     try {
-      const dr = await fetch(EDGE, { method: 'POST', headers: hdrs, body: JSON.stringify({ action: 'getDolls' }) });
-      const dd = await dr.json();
-      allDolls = dd.dolls || [];
+      const [dr, sr, tr] = await Promise.all([
+        fetch(`${SB_URL}/rest/v1/dolls?order=name.asc`, { headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}` } }),
+        fetch(`${SB_URL}/rest/v1/styles?order=name.asc`, { headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}` } }),
+        fetch(`${SB_URL}/rest/v1/tags?order=name.asc`, { headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}` } }),
+      ]);
+      allDolls  = (await dr.json()).map(r => r.name);
+      allStyles = (await sr.json()).map(r => r.name);
+      allTags   = (await tr.json()).map(r => r.name);
     } catch (_) {}
 
     buildFilters();
@@ -1213,6 +1220,29 @@ async function submitForm() {
     const rd = await res.json();
     if (!res.ok) throw new Error(JSON.stringify(rd));
 
+    // 非同步把新的 doll/style/tags 寫進清單 table（背景執行）
+    if (doll) {
+      fetch(`${SB_URL}/rest/v1/dolls`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Prefer': 'resolution=ignore-duplicates' },
+        body: JSON.stringify({ name: doll })
+      }).catch(() => {});
+    }
+    style.forEach(s => {
+      fetch(`${SB_URL}/rest/v1/styles`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Prefer': 'resolution=ignore-duplicates' },
+        body: JSON.stringify({ name: s })
+      }).catch(() => {});
+    });
+    tags.forEach(t => {
+      fetch(`${SB_URL}/rest/v1/tags`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Prefer': 'resolution=ignore-duplicates' },
+        body: JSON.stringify({ name: t })
+      }).catch(() => {});
+    });
+
     // 非同步備份到 Notion（背景執行，不等它）
     fetch(EDGE, {
       method:  'POST',
@@ -1240,12 +1270,13 @@ async function submitForm() {
 ══════════════════════════════════════════ */
 const AC_SOURCES = {
   'ac-name':  () => [...new Set(items.map(i => i.name).filter(Boolean))].sort(),
-  'ac-doll':  () => [...new Set(items.flatMap(i => i.doll).filter(Boolean))].sort(),
-  'ac-style': () => [...new Set(items.flatMap(i => i.style).filter(Boolean))].sort(),
+  'ac-doll':  () => allDolls.length ? allDolls : [...new Set(items.flatMap(i => i.doll).filter(Boolean))].sort(),
+  'ac-style': () => allStyles.length ? allStyles : [...new Set(items.flatMap(i => i.style).filter(Boolean))].sort(),
   'ac-tags':  () => {
+    if (allTags.length) return allTags;
     const tm = {};
     items.forEach(i => i.tags.forEach(t => tm[t] = (tm[t] || 0) + 1));
-    return Object.keys(tm).sort((a, b) => tm[b] - tm[a]); // 依頻率排序
+    return Object.keys(tm).sort((a, b) => tm[b] - tm[a]);
   },
 };
 
