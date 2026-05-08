@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
     });
 
     const upsertRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/outfits`,
+      `${SUPABASE_URL}/rest/v1/outfits?on_conflict=notion_id`,
       {
         method: "POST",
         headers: {
