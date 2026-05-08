@@ -2,7 +2,7 @@
 
 > 一個用來整理、瀏覽、收藏娃娃造型的輕量圖書館。
 
-🔗 **線上網址：** [https://plushes-outfit-db.vercel.app/](https://plushes-outfit-db.vercel.app/)
+🔗 **線上網址：** https://plushes-outfit-db.vercel.app/
 
 ---
 
@@ -19,6 +19,33 @@
 
 ## 技術架構
 
+```
+使用者瀏覽器
+     │
+     │  靜態 HTML/CSS/JS（單一 index.html）
+     │  部署於 Vercel
+     │
+     ├─── 讀取資料 ──────────────────────────────────────────────────────┐
+     │    POST /functions/v1/notion-proxy  { action: "list" }           │
+     │                                                                   ▼
+     │                                                    Supabase Edge Function
+     │                                                    (Deno · notion-proxy)
+     │                                                           │
+     │                                                           │  Notion API
+     │                                                           │  Bearer Token
+     │                                                           ▼
+     │                                                    Notion Database
+     │                                                    （造型資料來源）
+     │
+     └─── 上傳圖片 ──────────────────────────────────────────────────────┐
+          PUT /storage/v1/object/outfit-photos/<filename>               │
+                                                                        ▼
+                                                           Supabase Storage
+                                                           bucket: outfit-photos
+                                                           CDN: Cloudflare
+                                                           縮圖: Image Transform API
+```
+
 | 層級 | 技術 |
 |------|------|
 | 前端 | 純 HTML / CSS / Vanilla JS（單一 `index.html`，無框架） |
@@ -30,11 +57,42 @@
 
 ---
 
+## 資料流說明
+
+### 讀取造型（list）
+
+```
+index.html
+  └─ fetch POST /functions/v1/notion-proxy  { action: "list" }
+       └─ notion-proxy (Deno)
+            └─ POST https://api.notion.com/v1/databases/{id}/query
+                 └─ 回傳 JSON → 前端解析並渲染畫廊
+```
+
+### 新增造型（create）
+
+```
+index.html（使用者填表 + 選擇照片）
+  ├─ 1. 圖片壓縮（Canvas → WebP, max 800px）
+  ├─ 2. PUT Supabase Storage → 取得公開圖片 URL
+  └─ 3. fetch POST /functions/v1/notion-proxy  { action: "create", data: {...} }
+             └─ notion-proxy (Deno)
+                  └─ POST https://api.notion.com/v1/pages
+                       └─ 新增一筆 Notion 頁面（含圖片封面 + 所有欄位）
+```
+
+---
+
 ## 專案結構
 
 ```
 /
-└── index.html    # 整個應用程式（前端 + 所有邏輯）
+├── index.html                          # 整個前端應用（HTML + CSS + JS）
+├── README.md
+└── supabase/
+    └── functions/
+        └── notion-proxy/
+            └── index.ts                # Supabase Edge Function（Notion CRUD proxy）
 ```
 
 ---
@@ -56,16 +114,41 @@ python3 -m http.server 8080
 
 ---
 
+## 部署 Edge Function
+
+```bash
+# 安裝 Supabase CLI
+npm install -g supabase
+
+# 登入並連結專案
+supabase login
+supabase link --project-ref <your-project-ref>
+
+# 設定 Notion Token（不要 commit 進 git！）
+supabase secrets set NOTION_TOKEN=secret_xxxxxxxxxxxx
+
+# 部署
+supabase functions deploy notion-proxy
+```
+
+---
+
 ## 環境變數 / 設定
 
-目前設定值直接寫在 `index.html` 頂部的 `<script>` 區塊：
+### 前端（index.html 頂部 `<script>`）
 
 ```js
 const SB_URL = "https://<your-project>.supabase.co";
-const SB_KEY = "<your-anon-key>";
+const SB_KEY = "<your-anon-key>";   // Supabase public anon key（可公開）
 ```
 
-若要部署到自己的環境，替換這兩個值即可。Notion 的連接設定（Database ID、Token）則放在 Supabase Edge Function 的環境變數中。
+### Edge Function 環境變數（Supabase Dashboard → Settings → Edge Functions）
+
+| 變數名稱 | 說明 |
+|----------|------|
+| `NOTION_TOKEN` | Notion Integration Token（`secret_...`），**請勿 commit 至 git** |
+
+> Notion 的 Database ID 目前直接寫在 `notion-proxy/index.ts` 中（非敏感資訊，為公開 UUID）。
 
 ---
 
@@ -73,7 +156,7 @@ const SB_KEY = "<your-anon-key>";
 
 | 欄位名稱 | 類型 | 說明 |
 |----------|------|------|
-| 娃衣名稱 | Title | 造型名稱（必填）|
+| 娃衣名稱 | Title | 造型名稱（必填） |
 | 試穿娃娃 | Select | 使用的娃娃 |
 | 款式 | Multi-select | 例：上衣、配件、套裝 |
 | 娃娃尺寸 | Number | 單位 cm |
@@ -87,3 +170,5 @@ const SB_KEY = "<your-anon-key>";
 ## 授權
 
 本專案為個人收藏用途，程式碼可自由參考與修改。
+
+如果這個專案對你有幫助，歡迎到 [GitHub](https://github.com/SalmonStar/Plushes-Outfit-DB) 給個 ⭐ 支持一下！
