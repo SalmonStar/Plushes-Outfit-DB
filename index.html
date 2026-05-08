@@ -721,6 +721,7 @@ onmouseleave="this.style.opacity='0.45'">
 const SB_URL = "https://jakxuqbfplyohjshqnlp.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impha3h1cWJmcGx5b2hqc2hxbmxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNDUxOTksImV4cCI6MjA5MzcyMTE5OX0.PtSj2MKFARo88C0Hp4HTRDobanaI2xPSG3goPmNkCLM";
 const EDGE   = `${SB_URL}/functions/v1/notion-proxy`;   // Notion CRUD 的 Edge Function
+const DB     = `${SB_URL}/rest/v1/outfits`;                // Supabase DB REST API
 const BUCKET = `${SB_URL}/storage/v1/object/public/outfit-photos`; // Storage 公開圖片根路徑
 
 /* ══════════════════════════════════════════
@@ -743,42 +744,39 @@ const hdrs = {
 
 
 /* ══════════════════════════════════════════
-   資料載入：從 Notion 取得所有造型
+   資料載入：從 Supabase DB 讀取（快取）
 ══════════════════════════════════════════ */
 async function load() {
   try {
-    const r = await fetch(EDGE, { method: 'POST', headers: hdrs, body: JSON.stringify({ action: 'list' }) });
-    const d = await r.json();
+    // 從 Supabase DB 讀（比 Notion API 快很多）
+    const r = await fetch(
+      DB + '?order=created_at.desc&limit=100',
+      { headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}` } }
+    );
+    const rows = await r.json();
 
-    items = (d.results || []).map((pg, i) => {
-      const p = pg.properties;
-
-      // 原始圖片 URL（用於 Modal 完整顯示）
-      const originalCover = pg.cover?.external?.url || pg.cover?.file?.url || null;
-
-      // 縮圖 URL：僅 Supabase 圖片才套用轉換，加速畫廊載入
-      let thumbCover = originalCover;
+    items = (rows || []).map((row, i) => {
+      let thumbCover = row.cover;
       if (thumbCover && thumbCover.includes(SB_URL)) {
         thumbCover = thumbCover.replace('/object/public/', '/render/image/public/') + '?width=600&quality=80';
       }
-
       return {
         idx:       String(i + 1).padStart(3, '0'),
-        id:        pg.id,
-        name:      p['娃衣名稱']?.title?.[0]?.text?.content || 'Untitled',
-        doll:      p['試穿娃娃']?.select?.name ? [p['試穿娃娃'].select.name] : [],
-        style:     p['款式']?.multi_select?.map(t => t.name) || [],
-        size:      p['娃娃尺寸']?.number || null,
-        tags:      p['標籤']?.multi_select?.map(t => t.name) || [],
-        note:      p['備註']?.rich_text?.[0]?.text?.content || '',
-        shop:      p['商家連結或名稱']?.rich_text?.[0]?.text?.content || '',
-        origin:    p['產地']?.select?.name || '',
-        cover:     thumbCover,     // 畫廊縮圖（壓縮版）
-        fullCover: originalCover,  // Modal 原圖（完整版）
+        id:        row.id,
+        name:      row.name || 'Untitled',
+        doll:      row.doll ? [row.doll] : [],
+        style:     row.style || [],
+        size:      row.size || null,
+        tags:      row.tags || [],
+        note:      row.note || '',
+        shop:      row.shop || '',
+        origin:    row.origin || '',
+        cover:     thumbCover,
+        fullCover: row.cover,
       };
     });
 
-    // 同時抓 Notion 的完整娃娃選單
+    // 抓 Notion 完整娃娃選單（chip 用）
     try {
       const dr = await fetch(EDGE, { method: 'POST', headers: hdrs, body: JSON.stringify({ action: 'getDolls' }) });
       const dd = await dr.json();
@@ -1178,35 +1176,52 @@ async function submitForm() {
     setStatus('Uploading image...', '');
     const imageUrl = await uploadImg(compressedFile);
 
-    setStatus('Writing to Notion...', '');
+    setStatus('Saving...', '');
 
     // 解析標籤（逗號或中文逗號分隔）
     const tagsRaw = document.getElementById('f-tags').value;
     const tags    = tagsRaw ? tagsRaw.split(/[,，]/).map(t => t.trim()).filter(Boolean) : [];
+    const shop    = document.getElementById('f-shop').value.trim();
+    const doll    = document.getElementById('f-doll').value.trim();
+    const style   = document.getElementById('f-style').value.split(/[,，]/).map(s => s.trim()).filter(Boolean);
+    const size    = document.getElementById('f-size').value;
+    const note    = document.getElementById('f-note').value.trim();
+    const origin  = document.getElementById('f-origin').value;
 
-    const shop = document.getElementById('f-shop').value.trim();
-
-    const res = await fetch(EDGE, {
+    // 寫入 Supabase DB（馬上出現在網站）
+    const res = await fetch(DB, {
       method:  'POST',
-      headers: hdrs,
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SB_KEY,
+        'Authorization': `Bearer ${SB_KEY}`,
+        'Prefer': 'return=representation',
+      },
       body: JSON.stringify({
-        action: 'create',
-        data: {
-          name,
-          imageUrl,
-          doll:   document.getElementById('f-doll').value.trim(),
-          style:  document.getElementById('f-style').value.split(/[,，]/).map(s => s.trim()).filter(Boolean),
-          size:   document.getElementById('f-size').value,
-          tags,
-          note:   document.getElementById('f-note').value.trim(),
-          shop:   shop.startsWith('http') ? shop : '', // 只接受完整網址
-          origin: document.getElementById('f-origin').value,
-        }
+        name,
+        cover:  imageUrl,
+        doll:   doll || null,
+        style,
+        size:   size ? Number(size) : null,
+        tags,
+        note:   note || null,
+        shop:   shop.startsWith('http') ? shop : null,
+        origin: origin || null,
       })
     });
 
     const rd = await res.json();
-    if (!res.ok || rd.object === 'error') throw new Error(rd.message || JSON.stringify(rd));
+    if (!res.ok) throw new Error(JSON.stringify(rd));
+
+    // 非同步備份到 Notion（背景執行，不等它）
+    fetch(EDGE, {
+      method:  'POST',
+      headers: hdrs,
+      body: JSON.stringify({
+        action: 'create',
+        data: { name, imageUrl, doll, style, size, tags, note, shop: shop.startsWith('http') ? shop : '', origin }
+      })
+    }).catch(() => {});
 
     setStatus('Done ✓', 'ok');
     setTimeout(() => { closeUpload(); resetForm(); load(); }, 1200);
