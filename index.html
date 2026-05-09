@@ -425,19 +425,32 @@ header {
 }
 .crop-modal-bg.open { display: flex; }
 
-.crop-container {
+/* 固定寬度的背板，圖片和工具列都在裡面 */
+.crop-panel {
+  display: flex;
+  flex-direction: column;
+  width: min(560px, calc(100vw - 40px));
   background: #111;
-  width: 100%;
-  max-width: 560px;
-  position: relative;
-  overflow: hidden;
   border: 1px solid #333;
 }
 
-/* 裁切 Canvas 容器：可拖曳選取範圍 */
+/* 圖片區：固定高度，canvas 置中塞進去 */
+.crop-container {
+  width: 100%;
+  max-height: min(520px, calc(100vh - 220px));
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #111;
+  position: relative;
+}
+
+/* canvas 不設固定寬高，由 JS 設定，CSS 只做最大限制 */
 #cropCanvas {
   display: block;
-  width: 100%;
+  max-width: 100%;
+  max-height: min(520px, calc(100vh - 220px));
   cursor: crosshair;
   touch-action: none;
   -webkit-user-select: none;
@@ -447,16 +460,15 @@ header {
 /* 裁切工具列 */
 .crop-toolbar {
   background: #111;
-  border: 1px solid #333;
-  border-top: none;
+  border-top: 1px solid #333;
   padding: 14px 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   width: 100%;
-  max-width: 560px;
   box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 .crop-toolbar-row1 {
@@ -772,23 +784,25 @@ onmouseleave="this.style.opacity='0.45'">
      裁切 Modal（Crop）
 ══════════════════════════════════════════ -->
 <div class="crop-modal-bg" id="cropModal">
-  <div class="crop-container">
-    <canvas id="cropCanvas"></canvas>
-  </div>
-  <div class="crop-toolbar">
-    <div class="crop-toolbar-row1">
-      <div class="crop-ratio-group">
-        <button class="crop-ratio-btn active" onclick="setCropRatio('free')" id="rb-free">FREE</button>
-        <button class="crop-ratio-btn"        onclick="setCropRatio('3:4')"  id="rb-3x4">3:4</button>
-        <button class="crop-ratio-btn"        onclick="setCropRatio('9:16')" id="rb-9x16">9:16</button>
-      </div>
-      <div class="crop-action-group">
-        <button class="crop-cancel-btn"  onclick="closeCropModal()">CANCEL</button>
-        <button class="crop-confirm-btn" onclick="confirmCrop()">CROP →</button>
-      </div>
+  <div class="crop-panel">
+    <div class="crop-container">
+      <canvas id="cropCanvas"></canvas>
     </div>
-    <div class="crop-toolbar-row2">
-      <span class="crop-hint">拖曳選取範圍 · 角落可調整大小</span>
+    <div class="crop-toolbar">
+      <div class="crop-toolbar-row1">
+        <div class="crop-ratio-group">
+          <button class="crop-ratio-btn active" onclick="setCropRatio('free')" id="rb-free">FREE</button>
+          <button class="crop-ratio-btn"        onclick="setCropRatio('3:4')"  id="rb-3x4">3:4</button>
+          <button class="crop-ratio-btn"        onclick="setCropRatio('9:16')" id="rb-9x16">9:16</button>
+        </div>
+        <div class="crop-action-group">
+          <button class="crop-cancel-btn"  onclick="closeCropModal()">CANCEL</button>
+          <button class="crop-confirm-btn" onclick="confirmCrop()">CROP →</button>
+        </div>
+      </div>
+      <div class="crop-toolbar-row2">
+        <span class="crop-hint">拖曳選取範圍 · 角落可調整大小</span>
+      </div>
     </div>
   </div>
 </div>
@@ -1330,15 +1344,16 @@ function openCropModal(file) {
 
 /* 初始化 Canvas 尺寸與初始裁切框 */
 function initCropCanvas() {
-  const canvas  = document.getElementById('cropCanvas');
-  const maxW    = Math.min(window.innerWidth - 40, 560);
-  const maxH    = Math.min(window.innerHeight - 160, 520);
-  const imgR    = _cropImg.width / _cropImg.height;
-  const dispR   = maxW / maxH;
+  const canvas   = document.getElementById('cropCanvas');
+  const container = document.querySelector('.crop-container');
+  const maxW = container.clientWidth  || Math.min(window.innerWidth - 40, 560);
+  const maxH = Math.min(window.innerHeight - 220, 520);
+  const imgR = _cropImg.width / _cropImg.height;
+  const dispR = maxW / maxH;
 
   let cw, ch;
-  if (imgR > dispR) { cw = maxW; ch = maxW / imgR; }
-  else              { ch = maxH; cw = maxH * imgR; }
+  if (imgR > dispR) { cw = maxW; ch = Math.round(maxW / imgR); }
+  else              { ch = maxH; cw = Math.round(maxH * imgR); }
 
   canvas.width  = cw;
   canvas.height = ch;
@@ -1347,10 +1362,7 @@ function initCropCanvas() {
 
   // 初始裁切框：全圖
   _cropRect = { x: 0, y: 0, w: cw, h: ch };
-
-  // 套用比例鎖定
   _applyRatioToRect();
-  // 注意：不在這裡呼叫 _drawCrop，由 _bindCropEvents 換完 canvas 後統一繪製
   _bindCropEvents();
 }
 
