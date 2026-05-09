@@ -651,7 +651,7 @@ onmouseleave="this.style.opacity='0.45'">
     <div class="two">
       <div class="fg" style="position:relative">
         <label>試穿娃娃（逗號分隔）</label>
-        <input type="text" id="f-doll" placeholder="例：GSC若葉睦, GSC高松燈" autocomplete="off" oninput="showAC(this,'ac-doll')">
+        <input type="text" id="f-doll" placeholder="例：GSC若葉睦團服, 高松燈豆豆眼" autocomplete="off" oninput="showAC(this,'ac-doll')">
         <div id="ac-doll" class="ac-list"></div>
       </div>
       <div class="fg" style="position:relative">
@@ -1283,8 +1283,8 @@ async function submitForm() {
 
 /* ══════════════════════════════════════════
    Autocomplete（輸入框即時建議）
-   - ac-name / ac-doll：單一選取
-   - ac-style / ac-tags：逗號分隔多選，補全最後一個 token
+   - ac-name：單一選取
+   - ac-doll / ac-style / ac-tags：逗號分隔多選，補全最後一個 token
 ══════════════════════════════════════════ */
 const AC_SOURCES = {
   'ac-name':  () => [...new Set(items.map(i => i.name).filter(Boolean))].sort(),
@@ -1327,7 +1327,7 @@ function pickAC(e, inputId, listId, val) {
 
   if (listId === 'ac-tags' || listId === 'ac-style' || listId === 'ac-doll') {
     // 逗號前面已確認的值才算「已選過」，最後一個輸入中的 token 不算
-    const parts = input.value.split(',');
+    const parts = input.value.split(/[,，]/);
     const confirmed = parts.slice(0, -1).map(s => s.trim()).filter(Boolean);
     if (confirmed.includes(val)) {
       // 已存在：只清掉最後一個未完成的 token
