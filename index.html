@@ -367,7 +367,7 @@ header {
   padding: 36px 32px;
   position: relative;
 }
-.modal-x { position: absolute; top: 20px; right: 20px; background: none; border: none; font-size: 18px; color: var(--muted); cursor: pointer; font-family: 'DM Mono', monospace; line-height: 1; }
+.modal-x { position: absolute; top: 18px; right: 20px; background: none; border: none; font-size: 18px; color: var(--muted); cursor: pointer; font-family: 'DM Mono', monospace; line-height: 1; }
 .modal-x:hover { color: var(--text); }
 .modal-title { font-family: 'Shippori Mincho', serif; font-size: 18px; font-weight: 500; letter-spacing: .05em; margin-bottom: 28px; }
 
@@ -593,7 +593,10 @@ header {
    Detail Modal（造型詳細資訊）
 ══════════════════════════════════════════ */
 /* Detail Modal 圖片：固定高度＋完整顯示，不裁切任何部分，空白補背景色 */
-.detail-img   { width: 100%; height: 400px; object-fit: contain; background: var(--light); display: block; margin-bottom: 24px; }
+.detail-img   { width: 100%; height: 400px; object-fit: contain; background: #fff; display: block; margin-bottom: 24px; }
+@media (max-width: 640px) {
+  .detail-img { height: auto; max-height: 80vw; object-fit: contain; }
+}
 .detail-title { font-family: 'Shippori Mincho', serif; font-size: 20px; font-weight: 500; letter-spacing: .05em; margin-bottom: 20px; line-height: 1.4; }
 .detail-rows  { display: flex; flex-direction: column; gap: 10px; }
 .dr { display: flex; gap: 16px; font-size: 13px; }
@@ -917,8 +920,11 @@ onmouseleave="this.style.opacity='0.45'">
      內容由 openDetail() 動態填入
 ══════════════════════════════════════════ -->
 <div class="modal-bg" id="detModal">
-  <div class="modal" style="max-width:540px">
-    <button class="modal-x" onclick="document.getElementById('detModal').classList.remove('open')">×</button>
+  <div class="modal" style="max-width:540px; padding-top:56px;">
+    <button class="modal-x" onclick="closeDetail()">×</button>
+    <button id="shareBtn" onclick="copyShareLink()" title="分享此造型" style="position:absolute;top:14px;right:48px;background:none;border:none;padding:4px;cursor:pointer;color:var(--muted);transition:color .15s;line-height:0;" onmouseenter="this.style.color='var(--text)'" onmouseleave="this.style.color='var(--muted)'">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+    </button>
     <div id="detContent"></div>
   </div>
 </div>
@@ -1251,6 +1257,9 @@ function toggleSidebar() {
    Detail Modal：顯示造型詳細資訊
 ══════════════════════════════════════════ */
 function openDetail(item) {
+  // 更新 URL hash，讓這套娃衣有獨立連結
+  history.pushState(null, '', '#' + item.id);
+
   document.getElementById('detContent').innerHTML = `
     ${item.fullCover ? `<img class="detail-img" src="${item.fullCover}" alt="${item.name}">` : ''}
     <div class="detail-title">${item.name}</div>
@@ -1279,6 +1288,36 @@ function openDetail(item) {
     ` : ''}
   `;
   document.getElementById('detModal').classList.add('open');
+}
+
+/* 分享目前頁面（Web Share API → fallback 複製連結）*/
+function copyShareLink() {
+  const btn = document.getElementById('shareBtn');
+  const url = location.href;
+
+  // 優先使用系統原生分享選單（手機 LINE / Messenger / 複製連結等）
+  if (navigator.share) {
+    navigator.share({ url }).catch(() => {});
+    return;
+  }
+
+  // 桌機 fallback：複製到剪貼簿，icon 短暫變綠表示成功
+  navigator.clipboard.writeText(url).then(() => {
+    btn.style.color = '#3a7a56';
+    btn.title = 'COPIED ✓';
+    setTimeout(() => {
+      btn.style.color = '';
+      btn.title = '分享此造型';
+    }, 2000);
+  }).catch(() => {
+    prompt('複製以下連結：', url);
+  });
+}
+
+/* 關閉 Detail Modal 並清除 hash */
+function closeDetail() {
+  document.getElementById('detModal').classList.remove('open');
+  history.pushState(null, '', location.pathname);
 }
 
 
@@ -1911,13 +1950,25 @@ function resetForm() {
    Modal 點擊背景關閉
 ══════════════════════════════════════════ */
 document.getElementById('upModal').addEventListener('click',  e => { if (e.target === e.currentTarget) closeUpload(); });
-document.getElementById('detModal').addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.classList.remove('open'); });
+document.getElementById('detModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeDetail(); });
 
 
-/* ══════════════════════════════════════════
-   初始化：載入資料
-══════════════════════════════════════════ */
-load();
+load().then(() => {
+  // 頁面載入後，檢查 URL hash 是否有指定的造型 id
+  const hashId = location.hash.slice(1);
+  if (hashId) {
+    const target = items.find(i => i.id === hashId);
+    if (target) openDetail(target);
+  }
+});
+
+// 按下瀏覽器「上一頁」時，若 hash 消失就關閉 Modal
+window.addEventListener('popstate', () => {
+  if (!location.hash) {
+    document.getElementById('detModal').classList.remove('open');
+  }
+});
+
 
 </script>
 </body>
