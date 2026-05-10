@@ -369,6 +369,29 @@ header {
 }
 .modal-x { position: absolute; top: 18px; right: 20px; background: none; border: none; font-size: 18px; color: var(--muted); cursor: pointer; font-family: 'DM Mono', monospace; line-height: 1; }
 .modal-x:hover { color: var(--text); }
+
+/* Toast 提示 */
+.toast {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-12px);
+  background: var(--accent);
+  color: #fff;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .12em;
+  padding: 10px 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s, transform .2s;
+  z-index: 999;
+  white-space: nowrap;
+}
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
 .modal-title { font-family: 'Shippori Mincho', serif; font-size: 18px; font-weight: 500; letter-spacing: .05em; margin-bottom: 28px; }
 
 /* 表單欄位群組 */
@@ -930,6 +953,8 @@ onmouseleave="this.style.opacity='0.45'">
 </div>
 
 
+<div class="toast" id="toast">已複製連結</div>
+
 <script>
 /* ══════════════════════════════════════════
    後端設定（Supabase + Notion Edge Function）
@@ -1292,23 +1317,20 @@ function openDetail(item) {
 
 /* 分享目前頁面（Web Share API → fallback 複製連結）*/
 function copyShareLink() {
-  const btn = document.getElementById('shareBtn');
   const url = location.href;
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-  // 優先使用系統原生分享選單（手機 LINE / Messenger / 複製連結等）
-  if (navigator.share) {
+  // 手機：系統原生分享選單
+  if (isMobile && navigator.share) {
     navigator.share({ url }).catch(() => {});
     return;
   }
 
-  // 桌機 fallback：複製到剪貼簿，icon 短暫變綠表示成功
+  // 桌機：複製連結 + toast 提示
   navigator.clipboard.writeText(url).then(() => {
-    btn.style.color = '#3a7a56';
-    btn.title = 'COPIED ✓';
-    setTimeout(() => {
-      btn.style.color = '';
-      btn.title = '分享此造型';
-    }, 2000);
+    const toast = document.getElementById('toast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2000);
   }).catch(() => {
     prompt('複製以下連結：', url);
   });
